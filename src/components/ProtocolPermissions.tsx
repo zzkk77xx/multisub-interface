@@ -4,14 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
 import { PROTOCOLS, Protocol, ProtocolPool } from '@/lib/protocols'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
 
 interface ProtocolPermissionsProps {
   subAccountAddress: `0x${string}`
 }
 
 export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsProps) {
+  const { addresses } = useContractAddresses()
   const [selectedProtocols, setSelectedProtocols] = useState<Map<string, Set<string>>>(new Map())
   const [expandedProtocol, setExpandedProtocol] = useState<string | null>(null)
 
@@ -84,9 +86,14 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
       return
     }
 
+    if (!addresses.defiInteractor) {
+      alert('Contract address not configured')
+      return
+    }
+
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+        address: addresses.defiInteractor,
         abi: DEFI_INTERACTOR_ABI,
         functionName: 'setAllowedAddresses',
         args: [subAccountAddress, allowedAddresses, true],

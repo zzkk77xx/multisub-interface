@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { useAccount, useReadContract } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { formatEther } from 'viem'
 
 export function SubAccountDashboard() {
   const { address } = useAccount()
+  const { addresses } = useContractAddresses()
   const [timeRemaining, setTimeRemaining] = useState<string>('')
 
   // Read limits
   const { data: limits } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'getSubAccountLimits',
     args: address ? [address] : undefined,
@@ -19,14 +21,14 @@ export function SubAccountDashboard() {
 
   // Read portfolio value
   const { data: portfolioValue } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'getPortfolioValue',
   })
 
   // Read deposit window
   const { data: depositWindow } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'getDepositWindow',
     args: address ? [address] : undefined,
@@ -34,7 +36,7 @@ export function SubAccountDashboard() {
 
   // Read withdraw window
   const { data: withdrawWindow } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'getWithdrawWindow',
     args: address ? [address] : undefined,
@@ -42,7 +44,7 @@ export function SubAccountDashboard() {
 
   // Read transfer window
   const { data: transferWindow } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'getTransferWindow',
     args: address ? [address] : undefined,

@@ -4,16 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
 
 interface SpendingLimitsProps {
   subAccountAddress: `0x${string}`
 }
 
 export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
+  const { addresses } = useContractAddresses()
+
   // Read current limits
   const { data: currentLimits } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'getSubAccountLimits',
     args: [subAccountAddress],
@@ -55,9 +58,14 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
       return
     }
 
+    if (!addresses.defiInteractor) {
+      alert('Contract address not configured')
+      return
+    }
+
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+        address: addresses.defiInteractor,
         abi: DEFI_INTERACTOR_ABI,
         functionName: 'setSubAccountLimits',
         args: [

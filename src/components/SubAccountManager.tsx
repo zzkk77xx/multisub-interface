@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI, ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib/contracts'
+import { DEFI_INTERACTOR_ABI, ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib/contracts'
 import { ProtocolPermissions } from '@/components/ProtocolPermissions'
 import { SpendingLimits } from '@/components/SpendingLimits'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { isAddress } from 'viem'
 
 export function SubAccountManager() {
   const { address: connectedAddress } = useAccount()
+  const { addresses } = useContractAddresses()
   const [newSubAccount, setNewSubAccount] = useState('')
   const [grantDeposit, setGrantDeposit] = useState(false)
   const [grantWithdraw, setGrantWithdraw] = useState(false)
@@ -19,7 +21,7 @@ export function SubAccountManager() {
 
   // Read Safe address to check if user is owner
   const { data: safeAddress } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'safe',
   })
@@ -51,9 +53,9 @@ export function SubAccountManager() {
 
     try {
       // Grant deposit role if selected
-      if (grantDeposit) {
+      if (grantDeposit && addresses.defiInteractor) {
         grantRole({
-          address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+          address: addresses.defiInteractor,
           abi: DEFI_INTERACTOR_ABI,
           functionName: 'grantRole',
           args: [newSubAccount as `0x${string}`, ROLES.DEFI_DEPOSIT_ROLE],
@@ -61,9 +63,9 @@ export function SubAccountManager() {
       }
 
       // Grant withdraw role if selected
-      if (grantWithdraw) {
+      if (grantWithdraw && addresses.defiInteractor) {
         grantRole({
-          address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+          address: addresses.defiInteractor,
           abi: DEFI_INTERACTOR_ABI,
           functionName: 'grantRole',
           args: [newSubAccount as `0x${string}`, ROLES.DEFI_WITHDRAW_ROLE],
@@ -84,9 +86,11 @@ export function SubAccountManager() {
   }
 
   const handleRevokeRole = (account: `0x${string}`, roleId: number) => {
+    if (!addresses.defiInteractor) return
+
     try {
       revokeRole({
-        address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+        address: addresses.defiInteractor,
         abi: DEFI_INTERACTOR_ABI,
         functionName: 'revokeRole',
         args: [account, roleId],
@@ -220,17 +224,18 @@ interface SubAccountRowProps {
 
 function SubAccountRow({ account, onRevokeRole, isRevoking }: SubAccountRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const { addresses } = useContractAddresses()
 
   // Check which roles the account has
   const { data: hasDepositRole } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'hasRole',
     args: [account, ROLES.DEFI_DEPOSIT_ROLE],
   })
 
   const { data: hasWithdrawRole } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'hasRole',
     args: [account, ROLES.DEFI_WITHDRAW_ROLE],

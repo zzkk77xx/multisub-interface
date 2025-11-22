@@ -2,20 +2,22 @@ import { useEffect } from 'react'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
 
 export function EmergencyControls() {
   const { address: connectedAddress } = useAccount()
+  const { addresses } = useContractAddresses()
 
   // Read Safe address and pause status
   const { data: safeAddress } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'safe',
   })
 
   const { data: isPaused, refetch: refetchPauseStatus } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'paused',
   })
@@ -43,9 +45,11 @@ export function EmergencyControls() {
   }, [isPauseSuccess, isUnpauseSuccess, refetchPauseStatus])
 
   const handlePause = () => {
+    if (!addresses.defiInteractor) return
+
     try {
       pause({
-        address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+        address: addresses.defiInteractor,
         abi: DEFI_INTERACTOR_ABI,
         functionName: 'pause',
       })
@@ -56,9 +60,11 @@ export function EmergencyControls() {
   }
 
   const handleUnpause = () => {
+    if (!addresses.defiInteractor) return
+
     try {
       unpause({
-        address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+        address: addresses.defiInteractor,
         abi: DEFI_INTERACTOR_ABI,
         functionName: 'unpause',
       })

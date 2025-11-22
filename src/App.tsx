@@ -4,14 +4,17 @@ import { SafeStatus } from '@/components/SafeStatus'
 import { SubAccountManager } from '@/components/SubAccountManager'
 import { EmergencyControls } from '@/components/EmergencyControls'
 import { MyPermissions } from '@/components/MyPermissions'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { ContractSetup } from '@/components/ContractSetup'
+import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
 
 function App() {
   const { address: connectedAddress } = useAccount()
+  const { addresses, isConfigured } = useContractAddresses()
 
   // Check if connected address is the Safe owner
   const { data: safeAddress } = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'safe',
   })
@@ -39,13 +42,19 @@ function App() {
           </div>
 
           {/* Main Content - Conditional Layout */}
-          {isSafeOwner ? (
+          {!isConfigured ? (
+            /* Setup Required */
+            <div className="max-w-2xl mx-auto">
+              <ContractSetup />
+            </div>
+          ) : isSafeOwner ? (
             /* Safe Owner View */
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Status and Emergency */}
               <div className="lg:col-span-1 space-y-6">
                 <SafeStatus />
                 <EmergencyControls />
+                <ContractSetup />
               </div>
 
               {/* Right Column - Sub-Account Management */}
@@ -57,8 +66,9 @@ function App() {
             /* Sub-Account / External View */
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Status */}
-              <div className="lg:col-span-1">
+              <div className="lg:col-span-1 space-y-6">
                 <SafeStatus />
+                <ContractSetup />
               </div>
 
               {/* Right Column - My Permissions */}

@@ -7,14 +7,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from "@/lib/contracts";
+import { DEFI_INTERACTOR_ABI } from "@/lib/contracts";
+import { useContractAddresses } from "@/contexts/ContractAddressContext";
 
 export function SafeStatus() {
   const { address, isConnected } = useAccount();
+  const { addresses } = useContractAddresses();
 
   // Read pause status
   const pausedQuery = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: "paused",
   });
@@ -23,7 +25,7 @@ export function SafeStatus() {
 
   // Read Safe address from contract
   const safeAddressQuery = useReadContract({
-    address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
+    address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: "safe",
   });
