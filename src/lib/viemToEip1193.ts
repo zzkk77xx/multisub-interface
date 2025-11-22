@@ -1,11 +1,9 @@
+import { Eip1193Provider } from '@safe-global/protocol-kit';
 import type { PublicClient } from 'viem'
 
 /**
  * EIP-1193 Provider interface
  */
-interface Eip1193Provider {
-  request(args: { method: string; params?: any[] }): Promise<any>
-}
 
 /**
  * Creates an EIP-1193 compatible provider from a viem PublicClient
