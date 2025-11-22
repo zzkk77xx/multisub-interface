@@ -74,19 +74,6 @@ VITE_SMART_WALLET_ADDRESS=0x...
 VITE_ZODIAC_ROLES_ADDRESS=0x...
 ```
 
-### 3. Update Configuration
-
-Edit `src/wagmi.ts` to set your WalletConnect Project ID:
-
-```typescript
-export const config = getDefaultConfig({
-  appName: 'Morpho Smart Wallet Interface',
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
-  chains: [mainnet, sepolia], // Add your target chains
-  ssr: false,
-});
-```
-
 ## Development
 
 Run the development server:

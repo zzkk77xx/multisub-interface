@@ -1,36 +1,51 @@
-import { useAccount, useReadContract } from 'wagmi'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from '@/lib/contracts'
+import { useAccount, useReadContract } from "wagmi";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI } from "@/lib/contracts";
 
 export function SafeStatus() {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected } = useAccount();
 
   // Read pause status
-  const { data: isPaused } = useReadContract({
+  const pausedQuery = useReadContract({
     address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
     abi: DEFI_INTERACTOR_ABI,
-    functionName: 'paused',
-  })
+    functionName: "paused",
+  });
+  const isPaused = pausedQuery.data;
+  console.log(pausedQuery, isPaused);
 
   // Read Safe address from contract
-  const { data: safeAddress } = useReadContract({
+  const safeAddressQuery = useReadContract({
     address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
     abi: DEFI_INTERACTOR_ABI,
-    functionName: 'safe',
-  })
+    functionName: "safe",
+  });
+  const safeAddress = safeAddressQuery.data;
+  console.log(safeAddressQuery, safeAddress);
 
-  const isSafeOwner = isConnected && safeAddress && address?.toLowerCase() === safeAddress.toLowerCase()
+  const isSafeOwner =
+    isConnected &&
+    safeAddress &&
+    address?.toLowerCase() === safeAddress.toLowerCase();
 
   if (!isConnected) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Safe Status</CardTitle>
-          <CardDescription>Connect your wallet to view Safe status</CardDescription>
+          <CardDescription>
+            Connect your wallet to view Safe status
+          </CardDescription>
         </CardHeader>
       </Card>
-    )
+    );
   }
 
   return (
@@ -44,7 +59,9 @@ export function SafeStatus() {
           {isPaused ? (
             <Badge variant="destructive">PAUSED</Badge>
           ) : (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">ACTIVE</Badge>
+            <Badge variant="secondary" className="bg-green-100 text-green-800">
+              ACTIVE
+            </Badge>
           )}
         </div>
       </CardHeader>
@@ -53,14 +70,18 @@ export function SafeStatus() {
           <div>
             <p className="text-sm text-muted-foreground">Safe Address</p>
             <p className="font-mono text-sm mt-1">
-              {safeAddress ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}` : 'Loading...'}
+              {safeAddress
+                ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}`
+                : "Loading..."}
             </p>
           </div>
 
           <div>
             <p className="text-sm text-muted-foreground">Your Address</p>
             <p className="font-mono text-sm mt-1">
-              {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
+              {address
+                ? `${address.slice(0, 6)}...${address.slice(-4)}`
+                : "Not connected"}
             </p>
           </div>
 
@@ -81,12 +102,13 @@ export function SafeStatus() {
                 ⚠️ Emergency Mode Active
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                All deposit and withdrawal operations are paused. Only Safe owners can unpause the system.
+                All deposit and withdrawal operations are paused. Only Safe
+                owners can unpause the system.
               </p>
             </div>
           )}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

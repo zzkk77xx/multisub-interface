@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { CONTRACT_ADDRESSES, DEFI_INTERACTOR_ABI, ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib/contracts'
+import { ProtocolPermissions } from '@/components/ProtocolPermissions'
+import { SpendingLimits } from '@/components/SpendingLimits'
 import { isAddress } from 'viem'
 
 export function SubAccountManager() {
@@ -217,6 +219,8 @@ interface SubAccountRowProps {
 }
 
 function SubAccountRow({ account, onRevokeRole, isRevoking }: SubAccountRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   // Check which roles the account has
   const { data: hasDepositRole } = useReadContract({
     address: CONTRACT_ADDRESSES.DEFI_INTERACTOR,
@@ -233,49 +237,65 @@ function SubAccountRow({ account, onRevokeRole, isRevoking }: SubAccountRowProps
   })
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg">
-      <div className="flex-1">
-        <p className="font-mono text-sm">
-          {account.slice(0, 6)}...{account.slice(-4)}
-        </p>
-        <div className="flex gap-2 mt-2">
+    <div className="border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between p-3 bg-muted/30">
+        <div className="flex-1">
+          <p className="font-mono text-sm font-medium">
+            {account.slice(0, 6)}...{account.slice(-4)}
+          </p>
+          <div className="flex gap-2 mt-2">
+            {hasDepositRole && (
+              <Badge variant="secondary" className="text-xs">
+                {ROLE_NAMES[ROLES.DEFI_DEPOSIT_ROLE]}
+              </Badge>
+            )}
+            {hasWithdrawRole && (
+              <Badge variant="secondary" className="text-xs">
+                {ROLE_NAMES[ROLES.DEFI_WITHDRAW_ROLE]}
+              </Badge>
+            )}
+            {!hasDepositRole && !hasWithdrawRole && (
+              <Badge variant="outline" className="text-xs">No Roles</Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? 'Hide Config' : 'Configure'}
+          </Button>
           {hasDepositRole && (
-            <Badge variant="secondary" className="text-xs">
-              {ROLE_NAMES[ROLES.DEFI_DEPOSIT_ROLE]}
-            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onRevokeRole(account, ROLES.DEFI_DEPOSIT_ROLE)}
+              disabled={isRevoking}
+            >
+              Revoke Deposit
+            </Button>
           )}
           {hasWithdrawRole && (
-            <Badge variant="secondary" className="text-xs">
-              {ROLE_NAMES[ROLES.DEFI_WITHDRAW_ROLE]}
-            </Badge>
-          )}
-          {!hasDepositRole && !hasWithdrawRole && (
-            <Badge variant="outline" className="text-xs">No Roles</Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onRevokeRole(account, ROLES.DEFI_WITHDRAW_ROLE)}
+              disabled={isRevoking}
+            >
+              Revoke Withdraw
+            </Button>
           )}
         </div>
       </div>
-      <div className="flex gap-2">
-        {hasDepositRole && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onRevokeRole(account, ROLES.DEFI_DEPOSIT_ROLE)}
-            disabled={isRevoking}
-          >
-            Revoke Deposit
-          </Button>
-        )}
-        {hasWithdrawRole && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onRevokeRole(account, ROLES.DEFI_WITHDRAW_ROLE)}
-            disabled={isRevoking}
-          >
-            Revoke Withdraw
-          </Button>
-        )}
-      </div>
+
+      {isExpanded && (
+        <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4 border-t bg-background">
+          <SpendingLimits subAccountAddress={account} />
+          <ProtocolPermissions subAccountAddress={account} />
+        </div>
+      )}
     </div>
   )
 }
