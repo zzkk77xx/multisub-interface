@@ -95,9 +95,9 @@ export function ContractSetup() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm font-medium text-blue-900">What is this?</p>
-            <p className="text-xs text-blue-700 mt-1">
+          <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">What is this?</p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
               The DeFi Interactor is the smart contract that manages sub-account permissions
               and DeFi interactions. You can find this address from your Safe deployment or
               share it via URL.

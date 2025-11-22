@@ -65,7 +65,7 @@ export function SubAccountDashboard() {
         <CardContent>
           <div className="space-y-6">
             {/* Roles */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg">
               <p className="text-sm font-medium mb-2">Active Roles</p>
               <div className="flex gap-2">
                 {hasExecuteRole && (
@@ -97,11 +97,11 @@ export function SubAccountDashboard() {
 
             {/* Max Loss Tolerance */}
             {hasExecuteRole && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-red-900">Maximum Loss Tolerance</p>
-                    <p className="text-xs text-red-700 mt-1">
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100">Maximum Loss Tolerance</p>
+                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">
                       Protocol executions blocked if portfolio loss exceeds this limit
                     </p>
                   </div>

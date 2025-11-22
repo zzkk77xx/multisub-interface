@@ -178,9 +178,9 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
         ) : (
           <div className="space-y-4">
             {allowedAddresses.size > 0 && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                <p className="text-sm font-medium text-blue-900">Currently Allowed</p>
-                <p className="text-xs text-blue-700 mt-1">
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Currently Allowed</p>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
                   {allowedAddresses.size} address{allowedAddresses.size !== 1 ? 'es' : ''} already
                   permitted
                 </p>
@@ -198,7 +198,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
               return (
                 <div
                   key={protocol.id}
-                  className={`border rounded-lg p-4 ${isProtocolAllowed ? 'bg-green-50 border-green-200' : ''}`}
+                  className={`border rounded-lg p-4 ${isProtocolAllowed ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' : ''}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
@@ -217,7 +217,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
                           {isProtocolAllowed && (
                             <Badge
                               variant="default"
-                              className="text-xs bg-green-600"
+                              className="text-xs bg-blue-600"
                             >
                               Allowed
                             </Badge>
@@ -307,7 +307,7 @@ interface PoolCheckboxProps {
 
 function PoolCheckbox({ pool, checked, onToggle, isAllowed }: PoolCheckboxProps) {
   return (
-    <div className={`flex items-start gap-2 p-2 rounded ${isAllowed ? 'bg-green-100' : ''}`}>
+    <div className={`flex items-start gap-2 p-2 rounded ${isAllowed ? 'bg-blue-100 dark:bg-blue-950/40' : ''}`}>
       <Checkbox
         id={`pool-${pool.id}`}
         checked={checked}
@@ -323,7 +323,7 @@ function PoolCheckbox({ pool, checked, onToggle, isAllowed }: PoolCheckboxProps)
           {isAllowed && (
             <Badge
               variant="default"
-              className="text-xs bg-green-600"
+              className="text-xs bg-blue-600"
             >
               Allowed
             </Badge>

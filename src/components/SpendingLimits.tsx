@@ -198,9 +198,9 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
           </div>
 
           <div className="pt-4 border-t">
-            <div className="bg-blue-50 rounded-lg p-3 mb-4">
-              <p className="text-sm font-medium text-blue-900">Preview</p>
-              <div className="text-xs text-blue-700 mt-1 space-y-1">
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 mb-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Preview</p>
+              <div className="text-xs text-blue-700 dark:text-blue-300 mt-1 space-y-1">
                 <p>
                   Sub-account can transfer up to <strong>{transferLimit}%</strong> of the portfolio value per window
                 </p>

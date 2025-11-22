@@ -31,11 +31,11 @@ export const AAVE_PROTOCOL: Protocol = {
       description: 'Lend and borrow USDC'
     },
     {
-      id: 'aave-eth',
-      name: 'ETH Pool',
-      token: 'ETH',
-      address: '0x4200000000000000000000000000000000000006' as `0x${string}`, // WETH on Base
-      description: 'Lend and borrow ETH'
+      id: 'aave-wbtc',
+      name: 'WBTC Pool',
+      token: 'WBTC',
+      address: '0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951' as `0x${string}`, // WETH on Base
+      description: 'Lend and borrow WBTC'
     },
     {
       id: 'aave-usdt',
