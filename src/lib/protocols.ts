@@ -41,12 +41,12 @@ export const AAVE_PROTOCOL: Protocol = {
       description: 'Lend and borrow WBTC',
     },
     {
-      id: 'aave-usdt',
-      name: 'USDT Pool',
-      tokenName: 'USDT',
+      id: 'aave-matic',
+      name: 'Matic Pool',
+      tokenName: 'MATIC',
       tokenAddress: '0x' as `0x${string}`,
       address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' as `0x${string}`, // USDT on Base
-      description: 'Lend and borrow USDT',
+      description: 'Lend and borrow MATIC',
     },
   ],
 }
