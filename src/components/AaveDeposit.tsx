@@ -65,7 +65,11 @@ export function AaveDeposit() {
         address: addresses.defiInteractor,
         abi: DEFI_INTERACTOR_ABI,
         functionName: 'approveProtocol',
-        args: [aavePool?.tokenAddress as `0x${string}`, aavePool?.address as `0x${string}`, parsedAmount],
+        args: [
+          aavePool?.tokenAddress as `0x${string}`,
+          aavePool?.address as `0x${string}`,
+          parsedAmount,
+        ],
       })
     } catch (err) {
       console.error('Approval error:', err)
@@ -84,7 +88,7 @@ export function AaveDeposit() {
       setSuccessMessage(null)
       setError(null)
 
-      const decimals = 6 // USDC/USDT decimals, adjust based on token
+      const decimals = 8 // USDC/USDT decimals, adjust based on token
       const parsedAmount = parseUnits(amount, decimals)
 
       // Encode the Aave supply call
@@ -92,13 +96,12 @@ export function AaveDeposit() {
         abi: AAVE_V3_POOL_ABI,
         functionName: 'supply',
         args: [
-          selectedToken as `0x${string}`, // asset
+          aavePool?.tokenAddress as `0x${string}`, // asset
           parsedAmount, // amount
           safeAddress, // onBehalfOf (Safe wallet)
           0, // referralCode
         ],
       })
-      console.log(supplyData)
 
       // Call executeOnProtocol directly on DeFi Interactor
       writeContract({
