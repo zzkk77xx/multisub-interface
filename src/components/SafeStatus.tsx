@@ -33,7 +33,6 @@ export function SafeStatus() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Safe Status</CardTitle>
-            <CardDescription>DeFi Smart Wallet system status</CardDescription>
           </div>
           <Badge variant="secondary" className="bg-green-100 text-green-800">
             ACTIVE

@@ -20,15 +20,22 @@ function App() {
         <div className="flex flex-col space-y-8">
           {/* Header */}
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight">
-                DeFi Smart Wallet
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {isSafeOwner
-                  ? 'Manage sub-accounts with delegated DeFi permissions'
-                  : 'View your delegated DeFi permissions'}
-              </p>
+            <div className="flex items-center gap-4">
+              <img
+                src="/logo.png"
+                alt="MultiSub Logo"
+                className="w-12 h-12 object-contain"
+              />
+              <div>
+                <h1 className="text-4xl font-bold tracking-tight">
+                  MultiSub
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  {isSafeOwner
+                    ? 'Manage sub-accounts with delegated DeFi permissions'
+                    : 'View your delegated DeFi permissions'}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />

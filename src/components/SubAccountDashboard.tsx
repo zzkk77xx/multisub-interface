@@ -100,7 +100,7 @@ export function SubAccountDashboard() {
               <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-red-900 dark:text-red-100">Maximum Loss Tolerance</p>
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100">Maximum DeFi Allowance</p>
                     <p className="text-xs text-red-700 dark:text-red-300 mt-1">
                       Protocol executions blocked if portfolio loss exceeds this limit
                     </p>
