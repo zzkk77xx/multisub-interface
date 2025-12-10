@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib/contracts'
 import { PROTOCOLS } from '@/lib/protocols'
 import { SubAccountDashboard } from '@/components/SubAccountDashboard'
-import { AaveDeposit } from '@/components/AaveDeposit'
+import { SpendingAllowanceCard } from '@/components/SpendingAllowanceCard'
+import { AcquiredBalancesCard } from '@/components/AcquiredBalancesCard'
 import { useHasRole, useIsAddressAllowed } from '@/hooks/useSafe'
 
 export function MyPermissions() {
@@ -126,7 +127,12 @@ export function MyPermissions() {
 
       {hasAnyRole && <SubAccountDashboard />}
 
-      {/* {hasAnyRole && <AaveDeposit />} */}
+      {hasExecuteRole && address && (
+        <>
+          <SpendingAllowanceCard address={address} />
+          <AcquiredBalancesCard address={address} />
+        </>
+      )}
     </div>
   )
 }

@@ -13,7 +13,7 @@ export function useSafeAddress() {
   return useReadContract({
     address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
-    functionName: 'target',
+    functionName: 'avatar',
   })
 }
 
@@ -44,9 +44,7 @@ export function useIsSafeOwner() {
   const isSafeOwner =
     connectedAddress &&
     owners &&
-    owners.some(
-      (owner) => owner.toLowerCase() === connectedAddress.toLowerCase()
-    )
+    owners.some(owner => owner.toLowerCase() === connectedAddress.toLowerCase())
 
   return {
     isSafeOwner: Boolean(isSafeOwner),
@@ -88,10 +86,7 @@ export function useHasRole(member?: `0x${string}`, roleId?: number) {
 /**
  * Hook to check if a target address is allowed for a sub-account
  */
-export function useIsAddressAllowed(
-  subAccount?: `0x${string}`,
-  target?: `0x${string}`
-) {
+export function useIsAddressAllowed(subAccount?: `0x${string}`, target?: `0x${string}`) {
   const { addresses } = useContractAddresses()
 
   return useReadContract({
@@ -215,7 +210,7 @@ export function useAllowedAddresses(
 
         // Query the allowedAddresses mapping for each address
         const results = await Promise.all(
-          addressesToCheck.map(async (targetAddress) => {
+          addressesToCheck.map(async targetAddress => {
             try {
               const isAllowed = (await publicClient.readContract({
                 address: addresses.defiInteractor,
@@ -251,4 +246,148 @@ export function useAllowedAddresses(
   }, [addresses.defiInteractor, publicClient, subAccountAddress, addressesToCheck])
 
   return { allowedAddresses, isLoading, error }
+}
+
+/**
+ * Hook to get the spending allowance for a sub-account (oracle-managed)
+ * Returns remaining USD allowance (18 decimals)
+ */
+export function useSpendingAllowance(subAccountAddress?: `0x${string}`) {
+  const { addresses } = useContractAddresses()
+
+  return useReadContract({
+    address: addresses.defiInteractor,
+    abi: DEFI_INTERACTOR_ABI,
+    functionName: 'getSpendingAllowance',
+    args: subAccountAddress ? [subAccountAddress] : undefined,
+    query: {
+      enabled: Boolean(subAccountAddress && addresses.defiInteractor),
+    },
+  })
+}
+
+/**
+ * Hook to get the acquired balance for a specific token and sub-account
+ * Acquired tokens are FREE to use (don't cost spending allowance)
+ */
+export function useAcquiredBalance(
+  subAccountAddress?: `0x${string}`,
+  tokenAddress?: `0x${string}`
+) {
+  const { addresses } = useContractAddresses()
+
+  return useReadContract({
+    address: addresses.defiInteractor,
+    abi: DEFI_INTERACTOR_ABI,
+    functionName: 'getAcquiredBalance',
+    args: subAccountAddress && tokenAddress ? [subAccountAddress, tokenAddress] : undefined,
+    query: {
+      enabled: Boolean(subAccountAddress && tokenAddress && addresses.defiInteractor),
+    },
+  })
+}
+
+/**
+ * Hook to get Safe portfolio value and oracle status
+ * Returns: [totalValueUSD, lastUpdated, updateCount]
+ */
+export function useSafeValue() {
+  const { addresses } = useContractAddresses()
+
+  return useReadContract({
+    address: addresses.defiInteractor,
+    abi: DEFI_INTERACTOR_ABI,
+    functionName: 'getSafeValue',
+    query: {
+      enabled: Boolean(addresses.defiInteractor),
+    },
+  })
+}
+
+/**
+ * Hook to check if the Safe value data is stale (oracle hasn't updated recently)
+ * @param maxAge Maximum age in seconds (default: 3600 = 1 hour)
+ */
+export function useIsValueStale(maxAge: number = 3600) {
+  const { addresses } = useContractAddresses()
+
+  return useReadContract({
+    address: addresses.defiInteractor,
+    abi: DEFI_INTERACTOR_ABI,
+    functionName: 'isValueStale',
+    args: [BigInt(maxAge)],
+    query: {
+      enabled: Boolean(addresses.defiInteractor),
+    },
+  })
+}
+
+/**
+ * Hook to fetch acquired balances for multiple tokens
+ * Returns a map of token address -> balance
+ */
+export function useAcquiredBalances(
+  subAccountAddress?: `0x${string}`,
+  tokenAddresses?: `0x${string}`[]
+) {
+  const { addresses } = useContractAddresses()
+  const publicClient = usePublicClient()
+  const [balances, setBalances] = useState<Map<string, bigint>>(new Map())
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    async function fetchBalances() {
+      if (
+        !addresses.defiInteractor ||
+        !publicClient ||
+        !subAccountAddress ||
+        !tokenAddresses ||
+        tokenAddresses.length === 0
+      ) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Fetch balance for each token
+        const results = await Promise.all(
+          tokenAddresses.map(async tokenAddress => {
+            try {
+              const balance = (await publicClient.readContract({
+                address: addresses.defiInteractor,
+                abi: DEFI_INTERACTOR_ABI,
+                functionName: 'getAcquiredBalance',
+                args: [subAccountAddress, tokenAddress],
+                code: '0x',
+              })) as bigint
+              return { address: tokenAddress.toLowerCase(), balance }
+            } catch {
+              return { address: tokenAddress.toLowerCase(), balance: 0n }
+            }
+          })
+        )
+
+        // Build map of token -> balance
+        const balanceMap = new Map<string, bigint>()
+        results.forEach(({ address, balance }) => {
+          balanceMap.set(address, balance)
+        })
+
+        setBalances(balanceMap)
+      } catch (err) {
+        console.error('Error fetching acquired balances:', err)
+        setError(err instanceof Error ? err : new Error('Failed to fetch acquired balances'))
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchBalances()
+  }, [addresses.defiInteractor, publicClient, subAccountAddress, tokenAddresses])
+
+  return { balances, isLoading, error }
 }
