@@ -8,7 +8,7 @@ import { ROLE_NAMES, ROLES } from '@/lib/contracts'
  * from the DeFi Interactor contract by reading role assignment events
  */
 export function ManagedAccountsList() {
-  const { accounts, isLoading, error } = useManagedAccounts()
+  const { data: accounts = [], isLoading, error } = useManagedAccounts()
 
   if (isLoading) {
     return (

@@ -21,7 +21,7 @@ export function SubAccountManager() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Fetch managed accounts from contract
-  const { accounts: managedAccounts, isLoading: isLoadingAccounts, refetch } = useManagedAccounts()
+  const { data: managedAccounts = [], isLoading: isLoadingAccounts, refetch } = useManagedAccounts()
 
   // Use Safe proposal hook
   const { proposeTransaction, isPending, error } = useSafeProposal()

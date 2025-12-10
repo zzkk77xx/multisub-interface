@@ -16,28 +16,21 @@ interface SpendingLimitsProps {
 export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
   const { addresses } = useContractAddresses()
 
-  // Read current limits using hook
+  // Read current limits using hook - NEW: returns only 2 values
   const { data: currentLimits } = useSubAccountLimits(subAccountAddress)
 
-  const [transferLimit, setTransferLimit] = useState('10') // Default 10%
-  const [lossLimit, setLossLimit] = useState('5') // Default 5%
+  const [spendingLimit, setSpendingLimit] = useState('10') // Default 10% - unified limit
   const [windowHours, setWindowHours] = useState('24') // Default 24 hours
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const { proposeTransaction, isPending, error } = useSafeProposal()
 
   const handleSaveLimits = async () => {
-    const transferBps = Math.floor(parseFloat(transferLimit) * 100)
-    const lossBps = Math.floor(parseFloat(lossLimit) * 100)
+    const spendingBps = Math.floor(parseFloat(spendingLimit) * 100)
     const windowSeconds = Math.floor(parseFloat(windowHours) * 3600)
 
-    if (transferBps < 0 || transferBps > 10000) {
-      alert('Transfer limit must be between 0% and 100%')
-      return
-    }
-
-    if (lossBps < 0 || lossBps > 10000) {
-      alert('Loss limit must be between 0% and 100%')
+    if (spendingBps < 0 || spendingBps > 10000) {
+      alert('Spending limit must be between 0% and 100%')
       return
     }
 
@@ -54,14 +47,14 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
     try {
       setSuccessMessage(null)
 
+      // NEW signature: only 3 params (subAccount, maxSpendingBps, windowDuration)
       const data = encodeContractCall(
         addresses.defiInteractor,
         DEFI_INTERACTOR_ABI as any[],
         'setSubAccountLimits',
         [
           subAccountAddress,
-          BigInt(lossBps),
-          BigInt(transferBps),
+          BigInt(spendingBps),
           BigInt(windowSeconds),
         ]
       )
@@ -101,17 +94,13 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                 Current Configuration
                 <Badge variant="secondary" className="text-xs">Active</Badge>
               </p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-primary">{(Number(currentLimits[0]) / 100).toFixed(1)}%</p>
-                  <p className="text-xs text-muted-foreground mt-1">DeFi Allowance</p>
+                  <p className="text-xs text-muted-foreground mt-1">Spending Limit</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{(Number(currentLimits[1]) / 100).toFixed(1)}%</p>
-                  <p className="text-xs text-muted-foreground mt-1">Transfer Limit</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{(Number(currentLimits[2]) / 3600).toFixed(0)}h</p>
+                  <p className="text-2xl font-bold text-primary">{(Number(currentLimits[1]) / 3600).toFixed(0)}h</p>
                   <p className="text-xs text-muted-foreground mt-1">Time Window</p>
                 </div>
               </div>
@@ -121,9 +110,9 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
-                DeFi Allowance
-                <TooltipIcon content="Maximum allowance for DeFi protocol interactions as a percentage of portfolio value. If the allowance is exceeded, the sub-account will be blocked from further execute operations until reviewed." />
-                <Badge variant="destructive" className="text-xs">Risk Control</Badge>
+                Spending Limit
+                <TooltipIcon content="Maximum spending (all operations) as a percentage of portfolio value. Oracle tracks actual spending across swaps, deposits, withdrawals, and transfers." />
+                <Badge variant="destructive" className="text-xs">Per Window</Badge>
               </label>
               <div className="flex items-center gap-3">
                 <Input
@@ -131,29 +120,8 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                   min="0"
                   max="100"
                   step="0.5"
-                  value={lossLimit}
-                  onChange={e => setLossLimit(e.target.value)}
-                  placeholder="5"
-                  className="flex-1"
-                />
-                <span className="text-sm text-muted-foreground font-medium min-w-[30px]">%</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                Transfer Limit
-                <TooltipIcon content="Maximum percentage of total portfolio value that can be transferred out within the time window. This limit resets after each window period." />
-                <Badge variant="outline" className="text-xs">Per Window</Badge>
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  value={transferLimit}
-                  onChange={e => setTransferLimit(e.target.value)}
+                  value={spendingLimit}
+                  onChange={e => setSpendingLimit(e.target.value)}
                   placeholder="10"
                   className="flex-1"
                 />
@@ -192,10 +160,13 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
               </div>
               <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1.5 ml-7">
                 <p>
-                  • Transfers limited to <strong>{transferLimit}%</strong> of portfolio per {windowHours}-hour window
+                  • All operations limited to <strong>{spendingLimit}%</strong> of portfolio per {windowHours}-hour window
                 </p>
                 <p>
-                  • DeFi operations blocked if allowance exceeds <strong>{lossLimit}%</strong>
+                  • Oracle tracks real-time spending across all transactions
+                </p>
+                <p>
+                  • Acquired tokens (from swaps/deposits) are FREE for 24 hours
                 </p>
                 <p>
                   • Limits automatically reset every <strong>{windowHours} hours</strong>

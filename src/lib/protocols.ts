@@ -1,10 +1,8 @@
 // DeFi Protocol configurations for sub-account permissions
 
-export interface ProtocolPool {
+export interface ProtocolContract {
   id: string
   name: string
-  tokenName: string
-  tokenAddress?: `0x${string}`
   address: `0x${string}`
   description: string
 }
@@ -13,92 +11,95 @@ export interface Protocol {
   id: string
   name: string
   description: string
-  contractAddress: `0x${string}`
-  pools: ProtocolPool[]
+  contracts: ProtocolContract[]
 }
 
-// Aave Protocol Configuration (Base/Polygon addresses)
-export const AAVE_PROTOCOL: Protocol = {
-  id: 'aave',
-  name: 'Aave V3',
-  description: 'Decentralized lending protocol',
-  contractAddress: '0x794a61358D6845594F94dc1DB02A252b5b4814aD' as `0x${string}`, // Aave V3 Pool on Base
-  pools: [
+// Uniswap Protocol Configuration (Sepolia)
+export const UNISWAP_PROTOCOL: Protocol = {
+  id: 'uniswap',
+  name: 'Uniswap',
+  description: 'Decentralized exchange protocol',
+  contracts: [
     {
-      id: 'aave-usdc',
-      name: 'USDC Pool',
-      tokenName: 'USDC',
-      tokenAddress: '0x' as `0x${string}`, // USDC on Base
-      address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`, // USDC on Base
-      description: 'Lend and borrow USDC',
+      id: 'uniswap-swap-router-v3',
+      name: 'SwapRouter02 (V3)',
+      address: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E' as `0x${string}`,
+      description: 'Uniswap V3 swap router for token swaps',
     },
     {
-      id: 'aave-wbtc',
-      name: 'WBTC Pool',
-      tokenName: 'WBTC',
-      tokenAddress: '0x29f2D40B0605204364af54EC677bD022dA425d03',
-      address: '0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951' as `0x${string}`, // WETH on Base
-      description: 'Lend and borrow WBTC',
+      id: 'uniswap-position-manager-v3',
+      name: 'NonfungiblePositionManager (V3)',
+      address: '0x1238536071E1c677A632429e3655c799b22cDA52' as `0x${string}`,
+      description: 'Manage Uniswap V3 liquidity positions',
     },
     {
-      id: 'aave-matic',
-      name: 'Matic Pool',
-      tokenName: 'MATIC',
-      tokenAddress: '0x' as `0x${string}`,
-      address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' as `0x${string}`, // USDT on Base
-      description: 'Lend and borrow MATIC',
+      id: 'uniswap-universal-router',
+      name: 'Universal Router',
+      address: '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD' as `0x${string}`,
+      description: 'Universal router for swaps and liquidity',
+    },
+    {
+      id: 'uniswap-position-manager-v4',
+      name: 'PositionManager (V4)',
+      address: '0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4' as `0x${string}`,
+      description: 'Manage Uniswap V4 liquidity positions',
     },
   ],
 }
 
-// QuickSwap Protocol Configuration (Polygon)
-export const QUICKSWAP_PROTOCOL: Protocol = {
-  id: 'quickswap',
-  name: 'QuickSwap',
-  description: 'Decentralized exchange on Polygon',
-  contractAddress: '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff' as `0x${string}`, // QuickSwap Router
-  pools: [
+// Aave Protocol Configuration (Sepolia)
+export const AAVE_PROTOCOL: Protocol = {
+  id: 'aave',
+  name: 'Aave V3',
+  description: 'Decentralized lending and borrowing protocol',
+  contracts: [
     {
-      id: 'quickswap-matic-usdc',
-      name: 'MATIC-USDC',
-      tokenName: 'MATIC/USDC',
-      address: '0x6e7a5FAFcec6BB1e78bAE2A1F0B612012BF14827' as `0x${string}`,
-      description: 'Trade and provide liquidity for MATIC/USDC',
+      id: 'aave-pool',
+      name: 'Pool',
+      address: '0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951' as `0x${string}`,
+      description: 'Main Aave V3 lending pool',
     },
     {
-      id: 'quickswap-eth-usdc',
-      name: 'ETH-USDC',
-      tokenName: 'ETH/USDC',
-      address: '0x853Ee4b2A13f8a742d64C8F088bE7bA2131f670d' as `0x${string}`,
-      description: 'Trade and provide liquidity for ETH/USDC',
+      id: 'aave-rewards-controller',
+      name: 'RewardsController',
+      address: '0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb' as `0x${string}`,
+      description: 'Claim Aave protocol rewards',
     },
+  ],
+}
+
+// Merkl Protocol Configuration (Sepolia)
+export const MERKL_PROTOCOL: Protocol = {
+  id: 'merkl',
+  name: 'Merkl',
+  description: 'Merkl reward distribution protocol',
+  contracts: [
     {
-      id: 'quickswap-wbtc-eth',
-      name: 'WBTC-ETH',
-      tokenName: 'WBTC/ETH',
-      address: '0xdC9232E2Df177d7a12FdFf6EcBAb114E2231198D' as `0x${string}`,
-      description: 'Trade and provide liquidity for WBTC/ETH',
+      id: 'merkl-distributor',
+      name: 'Distributor',
+      address: '0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae' as `0x${string}`,
+      description: 'Claim Merkl protocol rewards',
     },
   ],
 }
 
 // All available protocols
-export const PROTOCOLS = [AAVE_PROTOCOL, QUICKSWAP_PROTOCOL] as const
+export const PROTOCOLS = [UNISWAP_PROTOCOL, AAVE_PROTOCOL, MERKL_PROTOCOL] as const
 
 // Helper to get protocol by ID
 export function getProtocolById(id: string): Protocol | undefined {
   return PROTOCOLS.find(p => p.id === id)
 }
 
-// Helper to get all pool addresses for a protocol
-export function getProtocolPoolAddresses(protocolId: string): `0x${string}`[] {
+// Helper to get all contract addresses for a protocol
+export function getProtocolContractAddresses(protocolId: string): `0x${string}`[] {
   const protocol = getProtocolById(protocolId)
-  return protocol ? protocol.pools.map(p => p.address) : []
+  return protocol ? protocol.contracts.map(c => c.address) : []
 }
 
-// Helper to check if an address is a valid protocol pool
-export function isValidProtocolPool(address: `0x${string}`): boolean {
+// Helper to check if an address is a valid protocol contract
+export function isValidProtocolContract(address: `0x${string}`): boolean {
   return PROTOCOLS.some(protocol =>
-    protocol.pools.some(pool => pool.address.toLowerCase() === address.toLowerCase())
+    protocol.contracts.some(contract => contract.address.toLowerCase() === address.toLowerCase())
   )
 }

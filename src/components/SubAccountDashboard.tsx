@@ -53,7 +53,7 @@ export function SubAccountDashboard() {
     )
   }
 
-  const [maxLossBps, maxTransferBps, windowDuration] = limits
+  const [maxSpendingBps, windowDuration] = limits
 
   return (
     <div className="space-y-6">
@@ -80,37 +80,24 @@ export function SubAccountDashboard() {
               </p>
             </div>
 
-            {/* Transfer Limit */}
-            {hasTransferRole && (
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium">Transfer Limit</p>
-                  <Badge variant="secondary" className="text-xs">
-                    {(Number(maxTransferBps) / 100).toFixed(2)}% of portfolio
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Maximum percentage of portfolio value that can be transferred within the time window
+            {/* Spending Limit */}
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Spending Limit</p>
+                <Badge variant="secondary">
+                  {(Number(maxSpendingBps) / 100).toFixed(2)}% of portfolio
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Maximum spending within {(Number(windowDuration) / 3600).toFixed(0)}h window.
+                Oracle tracks usage across all operations.
+              </p>
+              <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-900">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  ✨ Acquired tokens (from swaps/deposits) are FREE for 24h
                 </p>
               </div>
-            )}
-
-            {/* Max Loss Tolerance */}
-            {hasExecuteRole && (
-              <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-red-900 dark:text-red-100">Maximum DeFi Allowance</p>
-                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                      Protocol executions blocked if portfolio loss exceeds this limit
-                    </p>
-                  </div>
-                  <Badge variant="destructive">
-                    {(Number(maxLossBps) / 100).toFixed(2)}%
-                  </Badge>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>

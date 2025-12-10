@@ -19,7 +19,7 @@ const TOKENS_TO_TRACK = [
 
 export function AcquiredBalancesCard({ address }: AcquiredBalancesCardProps) {
   const tokenAddresses = TOKENS_TO_TRACK.map(t => t.address)
-  const { balances, isLoading } = useAcquiredBalances(address, tokenAddresses)
+  const { data: balances = new Map(), isLoading } = useAcquiredBalances(address, tokenAddresses)
 
   if (isLoading) {
     return (
