@@ -1,7 +1,7 @@
 import { useAccount, useReadContract, usePublicClient } from 'wagmi'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { DEFI_INTERACTOR_ABI, SAFE_ABI, ROLES } from '@/lib/contracts'
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { SubAccount } from '@/types'
 
 /**
@@ -104,83 +104,67 @@ export function useIsAddressAllowed(subAccount?: `0x${string}`, target?: `0x${st
 export function useManagedAccounts() {
   const { addresses } = useContractAddresses()
   const publicClient = usePublicClient()
-  const [accounts, setAccounts] = useState<SubAccount[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    async function fetchManagedAccounts() {
-      if (!addresses.defiInteractor || !publicClient) {
-        setIsLoading(false)
-        return
+  return useQuery({
+    queryKey: ['managedAccounts', addresses.defiInteractor],
+    queryFn: async (): Promise<SubAccount[]> => {
+      if (!publicClient || !addresses.defiInteractor) {
+        return []
       }
 
-      try {
-        setIsLoading(true)
-        setError(null)
+      // Fetch accounts for each role using the contract's getter functions
+      const [executeAccounts, transferAccounts] = await Promise.all([
+        publicClient.readContract({
+          address: addresses.defiInteractor,
+          abi: DEFI_INTERACTOR_ABI,
+          functionName: 'getSubaccountsByRole',
+          args: [ROLES.DEFI_EXECUTE_ROLE],
+        }) as Promise<`0x${string}`[]>,
+        publicClient.readContract({
+          address: addresses.defiInteractor,
+          abi: DEFI_INTERACTOR_ABI,
+          functionName: 'getSubaccountsByRole',
+          args: [ROLES.DEFI_TRANSFER_ROLE],
+        }) as Promise<`0x${string}`[]>,
+      ])
 
-        // Fetch accounts for each role using the contract's getter functions
-        const [executeAccounts, transferAccounts] = await Promise.all([
-          publicClient.readContract({
-            address: addresses.defiInteractor,
-            abi: DEFI_INTERACTOR_ABI,
-            functionName: 'getSubaccountsByRole',
-            args: [ROLES.DEFI_EXECUTE_ROLE],
-          }) as Promise<`0x${string}`[]>,
-          publicClient.readContract({
-            address: addresses.defiInteractor,
-            abi: DEFI_INTERACTOR_ABI,
-            functionName: 'getSubaccountsByRole',
-            args: [ROLES.DEFI_TRANSFER_ROLE],
-          }) as Promise<`0x${string}`[]>,
-        ])
+      // Build a map of addresses and their roles
+      const accountMap = new Map<`0x${string}`, { executeRole: boolean; transferRole: boolean }>()
 
-        // Build a map of addresses and their roles
-        const accountMap = new Map<`0x${string}`, { executeRole: boolean; transferRole: boolean }>()
+      // Add execute role accounts
+      for (const address of executeAccounts) {
+        accountMap.set(address, {
+          executeRole: true,
+          transferRole: false,
+        })
+      }
 
-        // Add execute role accounts
-        for (const address of executeAccounts) {
+      // Add transfer role accounts
+      for (const address of transferAccounts) {
+        const existing = accountMap.get(address)
+        if (existing) {
+          existing.transferRole = true
+        } else {
           accountMap.set(address, {
-            executeRole: true,
-            transferRole: false,
+            executeRole: false,
+            transferRole: true,
           })
         }
-
-        // Add transfer role accounts
-        for (const address of transferAccounts) {
-          const existing = accountMap.get(address)
-          if (existing) {
-            existing.transferRole = true
-          } else {
-            accountMap.set(address, {
-              executeRole: false,
-              transferRole: true,
-            })
-          }
-        }
-
-        // Convert map to array
-        const accountList: SubAccount[] = Array.from(accountMap.entries()).map(
-          ([address, roles]) => ({
-            address,
-            hasExecuteRole: roles.executeRole,
-            hasTransferRole: roles.transferRole,
-          })
-        )
-
-        setAccounts(accountList)
-      } catch (err) {
-        console.error('Error fetching managed accounts:', err)
-        setError(err instanceof Error ? err : new Error('Failed to fetch managed accounts'))
-      } finally {
-        setIsLoading(false)
       }
-    }
 
-    fetchManagedAccounts()
-  }, [addresses.defiInteractor, publicClient])
+      // Convert map to array
+      const accountList: SubAccount[] = Array.from(accountMap.entries()).map(
+        ([address, roles]) => ({
+          address,
+          hasExecuteRole: roles.executeRole,
+          hasTransferRole: roles.transferRole,
+        })
+      )
 
-  return { accounts, isLoading, error, refetch: () => setIsLoading(true) }
+      return accountList
+    },
+    enabled: Boolean(addresses.defiInteractor && publicClient),
+  })
 }
 
 /**
@@ -193,59 +177,43 @@ export function useAllowedAddresses(
 ) {
   const { addresses } = useContractAddresses()
   const publicClient = usePublicClient()
-  const [allowedAddresses, setAllowedAddresses] = useState<Set<`0x${string}`>>(new Set())
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    async function checkAllowedAddresses() {
-      if (!addresses.defiInteractor || !publicClient || !subAccountAddress || !addressesToCheck) {
-        setIsLoading(false)
-        return
+  return useQuery({
+    queryKey: ['allowedAddresses', addresses.defiInteractor, subAccountAddress, addressesToCheck],
+    queryFn: async (): Promise<Set<`0x${string}`>> => {
+      if (!publicClient || !subAccountAddress || !addressesToCheck) {
+        return new Set()
       }
 
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        // Query the allowedAddresses mapping for each address
-        const results = await Promise.all(
-          addressesToCheck.map(async targetAddress => {
-            try {
-              const isAllowed = (await publicClient.readContract({
-                address: addresses.defiInteractor,
-                abi: DEFI_INTERACTOR_ABI as any,
-                functionName: 'allowedAddresses',
-                args: [subAccountAddress, targetAddress],
-              } as any)) as boolean
-              return { address: targetAddress, isAllowed }
-            } catch {
-              return { address: targetAddress, isAllowed: false }
-            }
-          })
-        )
-
-        // Build set of allowed addresses
-        const allowed = new Set<`0x${string}`>()
-        results.forEach(({ address, isAllowed }) => {
-          if (isAllowed) {
-            allowed.add(address)
+      // Query the allowedAddresses mapping for each address
+      const results = await Promise.all(
+        addressesToCheck.map(async targetAddress => {
+          try {
+            const isAllowed = (await publicClient.readContract({
+              address: addresses.defiInteractor,
+              abi: DEFI_INTERACTOR_ABI as any,
+              functionName: 'allowedAddresses',
+              args: [subAccountAddress, targetAddress],
+            } as any)) as boolean
+            return { address: targetAddress, isAllowed }
+          } catch {
+            return { address: targetAddress, isAllowed: false }
           }
         })
+      )
 
-        setAllowedAddresses(allowed)
-      } catch (err) {
-        console.error('Error checking allowed addresses:', err)
-        setError(err instanceof Error ? err : new Error('Failed to check allowed addresses'))
-      } finally {
-        setIsLoading(false)
-      }
-    }
+      // Build set of allowed addresses
+      const allowed = new Set<`0x${string}`>()
+      results.forEach(({ address, isAllowed }) => {
+        if (isAllowed) {
+          allowed.add(address)
+        }
+      })
 
-    checkAllowedAddresses()
-  }, [addresses.defiInteractor, publicClient, subAccountAddress, addressesToCheck])
-
-  return { allowedAddresses, isLoading, error }
+      return allowed
+    },
+    enabled: Boolean(addresses.defiInteractor && publicClient && subAccountAddress && addressesToCheck),
+  })
 }
 
 /**
@@ -332,62 +300,46 @@ export function useAcquiredBalances(
 ) {
   const { addresses } = useContractAddresses()
   const publicClient = usePublicClient()
-  const [balances, setBalances] = useState<Map<string, bigint>>(new Map())
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    async function fetchBalances() {
-      if (
-        !addresses.defiInteractor ||
-        !publicClient ||
-        !subAccountAddress ||
-        !tokenAddresses ||
-        tokenAddresses.length === 0
-      ) {
-        setIsLoading(false)
-        return
+  return useQuery({
+    queryKey: ['acquiredBalances', addresses.defiInteractor, subAccountAddress, tokenAddresses],
+    queryFn: async (): Promise<Map<string, bigint>> => {
+      if (!publicClient || !subAccountAddress || !tokenAddresses || tokenAddresses.length === 0) {
+        return new Map()
       }
 
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        // Fetch balance for each token
-        const results = await Promise.all(
-          tokenAddresses.map(async tokenAddress => {
-            try {
-              const balance = (await publicClient.readContract({
-                address: addresses.defiInteractor,
-                abi: DEFI_INTERACTOR_ABI,
-                functionName: 'getAcquiredBalance',
-                args: [subAccountAddress, tokenAddress],
-                code: '0x',
-              })) as bigint
-              return { address: tokenAddress.toLowerCase(), balance }
-            } catch {
-              return { address: tokenAddress.toLowerCase(), balance: 0n }
-            }
-          })
-        )
-
-        // Build map of token -> balance
-        const balanceMap = new Map<string, bigint>()
-        results.forEach(({ address, balance }) => {
-          balanceMap.set(address, balance)
+      // Fetch balance for each token
+      const results = await Promise.all(
+        tokenAddresses.map(async tokenAddress => {
+          try {
+            const balance = (await publicClient.readContract({
+              address: addresses.defiInteractor,
+              abi: DEFI_INTERACTOR_ABI,
+              functionName: 'getAcquiredBalance',
+              args: [subAccountAddress, tokenAddress],
+              code: '0x',
+            })) as bigint
+            return { address: tokenAddress.toLowerCase(), balance }
+          } catch {
+            return { address: tokenAddress.toLowerCase(), balance: 0n }
+          }
         })
+      )
 
-        setBalances(balanceMap)
-      } catch (err) {
-        console.error('Error fetching acquired balances:', err)
-        setError(err instanceof Error ? err : new Error('Failed to fetch acquired balances'))
-      } finally {
-        setIsLoading(false)
-      }
-    }
+      // Build map of token -> balance
+      const balanceMap = new Map<string, bigint>()
+      results.forEach(({ address, balance }) => {
+        balanceMap.set(address, balance)
+      })
 
-    fetchBalances()
-  }, [addresses.defiInteractor, publicClient, subAccountAddress, tokenAddresses])
-
-  return { balances, isLoading, error }
+      return balanceMap
+    },
+    enabled: Boolean(
+      addresses.defiInteractor &&
+        publicClient &&
+        subAccountAddress &&
+        tokenAddresses &&
+        tokenAddresses.length > 0
+    ),
+  })
 }

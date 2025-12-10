@@ -1,5 +1,9 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+dayjs.extend(relativeTime)
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -44,18 +48,12 @@ export function formatBps(bps: bigint | number): string {
 }
 
 /**
- * Calculate time ago from timestamp
+ * Calculate time ago from timestamp using dayjs
  * @param timestamp - Unix timestamp (in seconds as bigint)
- * @returns Human-readable time ago string (e.g., "5m ago", "2h ago")
+ * @returns Human-readable time ago string (e.g., "5 minutes ago", "2 hours ago")
  */
 export function formatTimeAgo(timestamp: bigint): string {
-  const now = Math.floor(Date.now() / 1000)
-  const diff = now - Number(timestamp)
-
-  if (diff < 60) return `${diff}s ago`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  return `${Math.floor(diff / 86400)}d ago`
+  return dayjs.unix(Number(timestamp)).fromNow()
 }
 
 /**
