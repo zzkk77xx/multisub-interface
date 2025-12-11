@@ -8,16 +8,14 @@ import { useHasRole } from '@/hooks/useSafe'
 export function SubAccountDashboard() {
   const { address } = useAccount()
 
-  // Read limits using hook
   const { data: limits } = useSubAccountLimits(address)
 
-  // Check roles
   const { data: hasExecuteRole } = useHasRole(address, ROLES.DEFI_EXECUTE_ROLE)
   const { data: hasTransferRole } = useHasRole(address, ROLES.DEFI_TRANSFER_ROLE)
 
   if (!address) {
     return (
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <CardTitle>My Sub-Account</CardTitle>
           <CardDescription>Connect your wallet to view your sub-account details</CardDescription>
@@ -34,9 +32,12 @@ export function SubAccountDashboard() {
           <CardDescription>No roles assigned</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            This address does not have any roles assigned. Contact the Safe owner to request access.
-          </p>
+          <div className="bg-warning-muted p-4 border border-warning/20 rounded-xl">
+            <p className="text-secondary text-small">
+              This address does not have any roles assigned. Contact the Safe owner to request
+              access.
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -49,6 +50,11 @@ export function SubAccountDashboard() {
           <CardTitle>My Sub-Account</CardTitle>
           <CardDescription>Loading limits...</CardDescription>
         </CardHeader>
+        <CardContent>
+          <div className="py-8 text-center">
+            <div className="mx-auto border-2 border-accent-primary border-t-transparent rounded-full w-8 h-8 animate-spin" />
+          </div>
+        </CardContent>
       </Card>
     )
   }
@@ -63,37 +69,37 @@ export function SubAccountDashboard() {
           <CardDescription>Your roles and limits</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Roles */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg">
-              <p className="text-sm font-medium mb-2">Active Roles</p>
+            <div className="bg-gradient-to-r from-info-muted to-success-muted p-4 border border-info/20 rounded-xl">
+              <p className="mb-3 font-medium text-primary text-small">Active Roles</p>
               <div className="flex gap-2">
                 {hasExecuteRole && (
-                  <Badge variant="secondary">{ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}</Badge>
+                  <Badge variant="info">{ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}</Badge>
                 )}
                 {hasTransferRole && (
-                  <Badge variant="secondary">{ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]}</Badge>
+                  <Badge variant="success">{ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]}</Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-3">
+              <p className="mt-3 text-caption text-tertiary">
                 Window Duration: {(Number(windowDuration) / 3600).toFixed(0)} hours
               </p>
             </div>
 
             {/* Spending Limit */}
             <div className="p-4 border rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium">Spending Limit</p>
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-medium text-sm">Spending Limit</p>
                 <Badge variant="secondary">
                   {(Number(maxSpendingBps) / 100).toFixed(2)}% of portfolio
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Maximum spending within {(Number(windowDuration) / 3600).toFixed(0)}h window.
-                Oracle tracks usage across all operations.
+              <p className="text-muted-foreground text-xs">
+                Maximum spending within {(Number(windowDuration) / 3600).toFixed(0)}h window. Oracle
+                tracks usage across all operations.
               </p>
-              <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-900">
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+              <div className="bg-blue-50 dark:bg-blue-950/30 mt-3 p-2 border border-blue-200 dark:border-blue-900 rounded">
+                <p className="text-blue-700 dark:text-blue-300 text-xs">
                   ✨ Acquired tokens (from swaps/deposits) are FREE for 24h
                 </p>
               </div>

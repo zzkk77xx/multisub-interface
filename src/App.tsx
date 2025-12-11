@@ -5,6 +5,8 @@ import { EmergencyControls } from '@/components/EmergencyControls'
 import { MyPermissions } from '@/components/MyPermissions'
 import { ContractSetup } from '@/components/ContractSetup'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { WelcomeHero } from '@/components/WelcomeHero'
+import { StatsBar } from '@/components/StatsBar'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { useIsSafeOwner } from '@/hooks/useSafe'
 import { useAccount } from 'wagmi'
@@ -15,93 +17,108 @@ function App() {
   const { isConnected } = useAccount()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col space-y-8">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <img
-                src="/logo.png"
-                alt="MultiSub Logo"
-                className="w-12 h-12 object-contain"
-              />
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight">
-                  MultiSub
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  {isSafeOwner
-                    ? 'Manage sub-accounts with delegated DeFi permissions'
-                    : 'View your delegated DeFi permissions'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <ConnectButton />
+    <div className="min-h-screen app-background">
+      {/* Header */}
+      <header className="top-0 z-50 sticky border-subtle border-b glass">
+        <div className="flex justify-between items-center mx-auto px-6 h-16 container">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="MultiSub"
+              className="w-9 h-9 object-contain"
+            />
+            <div>
+              <h1 className="font-semibold text-primary text-lg leading-tight">MultiSub</h1>
+              <p className="-mt-0.5 text-caption text-tertiary">
+                {isSafeOwner ? 'Safe Owner' : 'DeFi Delegated'}
+              </p>
             </div>
           </div>
 
-          {/* Main Content - Conditional Layout */}
-          {!isConfigured ? (
-            /* Setup Required */
-            <div className="max-w-2xl mx-auto">
-              <ContractSetup />
-            </div>
-          ) : isSafeOwner && isConnected ? (
-            /* Safe Owner View */
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Status and Emergency */}
-              <div className="lg:col-span-1 space-y-6">
-                <SafeStatus />
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            {isConnected ? (
+              <ConnectButton
+                accountStatus="address"
+                chainStatus="icon"
+                showBalance={false}
+              />
+            ) : (
+              <ConnectButton.Custom>
+                {({ openConnectModal, mounted }) => {
+                  const ready = mounted
+                  if (!ready) return null
+
+                  return (
+                    <button
+                      onClick={openConnectModal}
+                      className="group inline-flex relative justify-center items-center bg-gradient-to-r shadow-glow hover:shadow-xl px-6 rounded-md h-10 overflow-hidden font-semibold text-black text-base hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 from-accent-primary to-accent-secondary"
+                    >
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform -translate-x-full group-hover:translate-x-full duration-700" />
+                      <span className="z-10 relative">Connect Wallet</span>
+                    </button>
+                  )
+                }}
+              </ConnectButton.Custom>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="mx-auto px-6 py-8 min-h-[calc(100dvh-130px)] container">
+        {!isConnected ? (
+          /* Welcome Screen */
+          <WelcomeHero />
+        ) : !isConfigured ? (
+          /* Setup Required */
+          <div className="mx-auto max-w-2xl animate-fade-in-up">
+            <ContractSetup />
+          </div>
+        ) : isSafeOwner ? (
+          /* Safe Owner View */
+          <div className="animate-fade-in space-y-6">
+            {/* Stats + Oracle en haut */}
+            <StatsBar />
+
+            {/* Main Content - Full width */}
+            <SubAccountManager />
+
+            {/* Secondary Row - 2 colonnes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SafeStatus />
+              <div className="space-y-4">
                 <EmergencyControls />
                 <ContractSetup />
               </div>
-
-              {/* Right Column - Sub-Account Management */}
-              <div className="lg:col-span-2">
-                <SubAccountManager />
-              </div>
             </div>
-          ) : isConnected ? (
-            /* Sub-Account / External View */
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Status */}
-              <div className="lg:col-span-1 space-y-6">
-                <SafeStatus />
-                <ContractSetup />
-              </div>
-
-              {/* Right Column - My Permissions */}
-              <div className="lg:col-span-2">
-                <MyPermissions />
-              </div>
-            </div>
-          ) : (
-            /* Not Connected */
-            <div className="max-w-2xl mx-auto text-center py-12">
-              <div className="bg-card rounded-lg border p-8">
-                <h2 className="text-2xl font-semibold mb-3">Welcome to DeFi Smart Wallet</h2>
-                <p className="text-muted-foreground mb-6">
-                  Please connect your wallet to view and manage your DeFi permissions.
-                </p>
-                <ConnectButton />
-              </div>
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground border-t pt-6">
-            <p>
-              Secure self-custody DeFi wallet combining Safe multisig security with delegated permissions.
-            </p>
-            <p className="mt-1">
-              Sub-accounts can execute operations within strict limits while Safe retains full control.
-            </p>
           </div>
+        ) : (
+          /* Sub-Account / External View */
+          <div className="animate-fade-in space-y-6">
+            {/* Stats + Oracle en haut */}
+            <StatsBar />
+
+            {/* Main Content - Full width */}
+            <MyPermissions />
+
+            {/* Secondary Row - 2 colonnes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SafeStatus />
+              <ContractSetup />
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="mt-auto border-subtle border-t">
+        <div className="mx-auto px-6 py-6 text-center container">
+          <p className="text-caption text-tertiary">Secured by Safe • Built for DeFi</p>
         </div>
-      </div>
+      </footer>
     </div>
   )
 }

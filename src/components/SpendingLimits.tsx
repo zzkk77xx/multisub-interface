@@ -52,11 +52,7 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
         addresses.defiInteractor,
         DEFI_INTERACTOR_ABI as any[],
         'setSubAccountLimits',
-        [
-          subAccountAddress,
-          BigInt(spendingBps),
-          BigInt(windowSeconds),
-        ]
+        [subAccountAddress, BigInt(spendingBps), BigInt(windowSeconds)]
       )
 
       const result = await proposeTransaction({
@@ -65,9 +61,7 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
       })
 
       if (result.success) {
-        setSuccessMessage(
-          `Spending limits set successfully! Transaction hash: ${result.transactionHash}`
-        )
+        setSuccessMessage(`Spending limits set successfully!`)
       } else {
         throw result.error || new Error('Transaction failed')
       }
@@ -80,28 +74,30 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle>Spending Limits</CardTitle>
-        <CardDescription>
-          Set strict limits to control sub-account spending
-        </CardDescription>
+        <CardDescription>Set strict limits to control sub-account spending</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-5">
           {currentLimits && (
-            <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-lg border">
-              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-info-muted to-success-muted p-4 border border-info/20 rounded-xl">
+              <p className="flex items-center gap-2 mb-3 font-medium text-primary text-small">
                 Current Configuration
-                <Badge variant="secondary" className="text-xs">Active</Badge>
+                <Badge variant="success">Active</Badge>
               </p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="gap-4 grid grid-cols-2">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{(Number(currentLimits[0]) / 100).toFixed(1)}%</p>
-                  <p className="text-xs text-muted-foreground mt-1">Spending Limit</p>
+                  <p className="font-bold text-primary text-2xl">
+                    {(Number(currentLimits[0]) / 100).toFixed(1)}%
+                  </p>
+                  <p className="mt-1 text-muted-foreground text-xs">Spending Limit</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{(Number(currentLimits[1]) / 3600).toFixed(0)}h</p>
-                  <p className="text-xs text-muted-foreground mt-1">Time Window</p>
+                  <p className="font-bold text-primary text-2xl">
+                    {(Number(currentLimits[1]) / 3600).toFixed(0)}h
+                  </p>
+                  <p className="mt-1 text-muted-foreground text-xs">Time Window</p>
                 </div>
               </div>
             </div>
@@ -109,10 +105,15 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
+              <label className="flex items-center gap-2 font-medium text-sm">
                 Spending Limit
                 <TooltipIcon content="Maximum spending (all operations) as a percentage of portfolio value. Oracle tracks actual spending across swaps, deposits, withdrawals, and transfers." />
-                <Badge variant="destructive" className="text-xs">Per Window</Badge>
+                <Badge
+                  variant="destructive"
+                  className="text-xs"
+                >
+                  Per Window
+                </Badge>
               </label>
               <div className="flex items-center gap-3">
                 <Input
@@ -125,14 +126,14 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                   placeholder="10"
                   className="flex-1"
                 />
-                <span className="text-sm text-muted-foreground font-medium min-w-[30px]">%</span>
+                <span className="min-w-[30px] font-medium text-small text-tertiary">%</span>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
+              <label className="flex items-center gap-2 font-medium text-primary text-small">
                 Time Window
-                <TooltipIcon content="Duration in hours for the spending window. Transfer limits reset after this period. Minimum 1 hour, maximum 168 hours (1 week)." />
+                <TooltipIcon content="Duration in hours for the spending window. Transfer limits reset after this period." />
               </label>
               <div className="flex items-center gap-3">
                 <Input
@@ -145,31 +146,29 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                   placeholder="24"
                   className="flex-1"
                 />
-                <span className="text-sm text-muted-foreground font-medium min-w-[50px]">hours</span>
+                <span className="min-w-[50px] font-medium text-small text-tertiary">hours</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t space-y-3">
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-900">
+          <div className="space-y-3 pt-4 border-subtle border-t">
+            <div className="bg-info-muted p-4 border border-info/20 rounded-xl">
               <div className="flex items-start gap-2 mb-2">
-                <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center flex-shrink-0 text-xs">
+                <div className="flex flex-shrink-0 justify-center items-center bg-info rounded-full w-5 h-5 font-bold text-black text-xs">
                   i
                 </div>
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Summary</p>
+                <p className="font-medium text-primary text-small">Summary</p>
               </div>
-              <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1.5 ml-7">
+              <div className="space-y-1.5 ml-7 text-caption text-secondary">
                 <p>
-                  • All operations limited to <strong>{spendingLimit}%</strong> of portfolio per {windowHours}-hour window
+                  • All operations limited to <strong>{spendingLimit}%</strong> of portfolio per{' '}
+                  {windowHours}-hour window
                 </p>
+                <p>• Oracle tracks real-time spending across all transactions</p>
+                <p>• Acquired tokens (from swaps/deposits) are FREE for 24 hours</p>
                 <p>
-                  • Oracle tracks real-time spending across all transactions
-                </p>
-                <p>
-                  • Acquired tokens (from swaps/deposits) are FREE for 24 hours
-                </p>
-                <p>
-                  • Limits automatically reset every <strong>{windowHours} hours</strong>
+                  • Limits automatically reset every{' '}
+                  <strong className="text-primary">{windowHours} hours</strong>
                 </p>
               </div>
             </div>
@@ -183,14 +182,14 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
             </Button>
 
             {successMessage && (
-              <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900 text-center">
-                ✓ {successMessage}
+              <div className="bg-success-muted p-3 border border-success/20 rounded-lg text-center">
+                <p className="text-small text-success">{successMessage}</p>
               </div>
             )}
 
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900 text-center">
-                ✗ {String(error)}
+              <div className="bg-error-muted p-3 border border-error/20 rounded-lg text-center">
+                <p className="text-error text-small">{String(error)}</p>
               </div>
             )}
           </div>

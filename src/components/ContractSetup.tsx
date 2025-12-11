@@ -45,41 +45,40 @@ export function ContractSetup() {
   if (isConfigured && addresses.defiInteractor) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Contract Configuration</CardTitle>
-              <CardDescription>Currently connected contracts</CardDescription>
-            </div>
-            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-              Configured
-            </Badge>
+            <CardTitle>Contract Config</CardTitle>
+            <Badge variant="success">Configured</Badge>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">DeFi Interactor Contract</p>
-              <p className="font-mono text-sm mt-1 break-all">
-                {addresses.defiInteractor}
+            <div className="p-3 rounded-lg bg-elevated-2 border border-subtle">
+              <p className="text-caption text-tertiary uppercase tracking-wider mb-1">
+                DeFi Interactor
+              </p>
+              <p className="font-mono text-small text-primary break-all">
+                {addresses.defiInteractor.slice(0, 10)}...{addresses.defiInteractor.slice(-8)}
               </p>
             </div>
 
             {addresses.safe && (
-              <div>
-                <p className="text-sm text-muted-foreground">Safe Address</p>
-                <p className="font-mono text-sm mt-1 break-all">
-                  {addresses.safe}
+              <div className="p-3 rounded-lg bg-elevated-2 border border-subtle">
+                <p className="text-caption text-tertiary uppercase tracking-wider mb-1">
+                  Safe Address
+                </p>
+                <p className="font-mono text-small text-primary break-all">
+                  {addresses.safe.slice(0, 10)}...{addresses.safe.slice(-8)}
                 </p>
               </div>
             )}
 
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={copyShareableLink}>
-                Copy Shareable Link
+              <Button variant="secondary" size="sm" onClick={copyShareableLink} className="flex-1">
+                Share Link
               </Button>
-              <Button variant="outline" size="sm" onClick={handleClear}>
-                Change Contracts
+              <Button variant="outline" size="sm" onClick={handleClear} className="flex-1">
+                Change
               </Button>
             </div>
           </div>
@@ -89,7 +88,7 @@ export function ContractSetup() {
   }
 
   return (
-    <Card className="border-2 border-primary">
+    <Card variant="featured">
       <CardHeader>
         <div className="flex items-center justify-between mb-2">
           <CardTitle>Getting Started</CardTitle>
@@ -97,12 +96,12 @@ export function ContractSetup() {
             {(['welcome', 'connect-wallet', 'enter-contract'] as const).map((s, idx) => (
               <div
                 key={s}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
                   s === step
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-gradient-to-r from-accent-primary to-accent-secondary text-black'
                     : ['welcome', 'connect-wallet', 'enter-contract'].indexOf(step) > idx
-                    ? 'bg-green-500 text-white'
-                    : 'bg-muted text-muted-foreground'
+                    ? 'bg-success text-black'
+                    : 'bg-elevated-2 text-tertiary'
                 }`}
               >
                 {idx + 1}
@@ -120,44 +119,32 @@ export function ContractSetup() {
         <div className="space-y-4">
           {step === 'welcome' && (
             <>
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg">
-                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-info-muted to-success-muted border border-info/20">
+                <h3 className="text-h3 text-primary mb-2">
                   Secure DeFi with Sub-Accounts
                 </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="text-small text-secondary">
                   MultiSub combines Safe multisig security with delegated permissions. Create sub-accounts
                   that can execute DeFi operations within strict limits while your Safe retains full control.
                 </p>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    ✓
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Enhanced Security</p>
-                    <p className="text-xs text-muted-foreground">Your Safe multisig remains in full control</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    ✓
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Delegated Permissions</p>
-                    <p className="text-xs text-muted-foreground">Grant limited DeFi access to sub-accounts</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    ✓
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Spending Limits</p>
-                    <p className="text-xs text-muted-foreground">Set strict percentage-based limits and time windows</p>
-                  </div>
-                </div>
+                <FeatureItem
+                  icon="🔒"
+                  title="Enhanced Security"
+                  description="Your Safe multisig remains in full control"
+                />
+                <FeatureItem
+                  icon="⚡"
+                  title="Delegated Permissions"
+                  description="Grant limited DeFi access to sub-accounts"
+                />
+                <FeatureItem
+                  icon="📊"
+                  title="Spending Limits"
+                  description="Set strict percentage-based limits and time windows"
+                />
               </div>
 
               <Button onClick={() => setStep('connect-wallet')} className="w-full">
@@ -168,11 +155,11 @@ export function ContractSetup() {
 
           {step === 'connect-wallet' && (
             <>
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+              <div className="p-4 rounded-xl bg-info-muted border border-info/20">
+                <p className="text-small font-medium text-primary mb-2">
                   Connect Your Wallet
                 </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+                <p className="text-caption text-secondary">
                   Click the "Connect Wallet" button in the top right to connect your wallet.
                   You'll need to be a Safe owner to manage sub-accounts.
                 </p>
@@ -191,18 +178,19 @@ export function ContractSetup() {
 
           {step === 'enter-contract' && (
             <>
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+              <div className="p-4 rounded-xl bg-info-muted border border-info/20">
+                <p className="text-small font-medium text-primary mb-2">
                   Configure Contract Address
                 </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+                <p className="text-caption text-secondary">
                   Enter the DeFi Interactor contract address from your Safe deployment.
-                  This contract manages sub-account permissions and DeFi interactions.
                 </p>
               </div>
 
               <div>
-                <label className="text-sm font-medium">DeFi Interactor Address</label>
+                <label className="text-small font-medium text-primary mb-2 block">
+                  DeFi Interactor Address
+                </label>
                 <Input
                   type="text"
                   placeholder="0x..."
@@ -211,10 +199,9 @@ export function ContractSetup() {
                     setDefiInteractorInput(e.target.value)
                     setError('')
                   }}
-                  className="mt-1"
                 />
                 {error && (
-                  <p className="text-sm text-red-600 mt-1">{error}</p>
+                  <p className="text-small text-error mt-2">{error}</p>
                 )}
               </div>
 
@@ -227,15 +214,14 @@ export function ContractSetup() {
                   disabled={!defiInteractorInput}
                   className="flex-1"
                 >
-                  Connect to Contract
+                  Connect
                 </Button>
               </div>
 
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">
-                  You can also share a direct link with the contract address:
-                  <br />
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded mt-1 inline-block">
+              <div className="pt-3 border-t border-subtle">
+                <p className="text-caption text-tertiary">
+                  You can also share a direct link:
+                  <code className="text-caption bg-elevated-2 px-1.5 py-0.5 rounded ml-1">
                     ?defiInteractor=0x...
                   </code>
                 </p>
@@ -245,5 +231,19 @@ export function ContractSetup() {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function FeatureItem({ icon, title, description }: { icon: string; title: string; description: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-8 h-8 rounded-lg bg-success-muted flex items-center justify-center flex-shrink-0">
+        <span>{icon}</span>
+      </div>
+      <div>
+        <p className="text-small font-medium text-primary">{title}</p>
+        <p className="text-caption text-tertiary">{description}</p>
+      </div>
+    </div>
   )
 }

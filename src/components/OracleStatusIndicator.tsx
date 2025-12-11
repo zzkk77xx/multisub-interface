@@ -9,8 +9,8 @@ export function OracleStatusIndicator() {
 
   if (isLoading || !safeValue) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
+      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+        <div className="bg-gray-400 rounded-full w-2 h-2 animate-pulse" />
         <span>Oracle loading...</span>
       </div>
     )
@@ -45,37 +45,39 @@ export function OracleStatusIndicator() {
   }
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-lg border">
+    <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-elevated border border-subtle">
+      {/* Status indicator */}
       <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${statusColor} ${timeSinceUpdate < 300 ? 'animate-pulse' : ''}`} />
-        <span className="text-sm font-medium">Oracle Status</span>
+        <div
+          className={`w-2 h-2 rounded-full ${statusColor} ${timeSinceUpdate < 300 ? 'animate-pulse' : ''}`}
+        />
+        <span className="font-medium text-sm text-primary">Oracle</span>
         <TooltipIcon content="The Chainlink oracle updates portfolio value and spending allowance data. Fresh data ensures accurate spending limits." />
-      </div>
-
-      <Badge variant={statusVariant} className="text-xs">
-        {statusText}
-      </Badge>
-
-      <div className="flex items-center gap-4 ml-auto text-xs text-muted-foreground">
-        <div className="text-right">
-          <p className="font-semibold text-foreground">${formatUSD(totalValueUSD)}</p>
-          <p>Portfolio Value</p>
-        </div>
-        <div className="text-right">
-          <p className="font-semibold text-foreground">{formatTimeAgo(lastUpdated)}</p>
-          <p>Last Update</p>
-        </div>
-        <div className="text-right">
-          <p className="font-semibold text-foreground">#{Number(updateCount)}</p>
-          <p>Updates</p>
-        </div>
-      </div>
-
-      {isStale && (
-        <Badge variant="outline" className="text-xs text-yellow-600 dark:text-yellow-400 ml-2">
-          ⚠️ Data may be outdated
+        <Badge variant={statusVariant} className="text-xs">
+          {statusText}
         </Badge>
-      )}
+        {isStale && (
+          <Badge variant="outline" className="text-warning text-xs">
+            ⚠️ Outdated
+          </Badge>
+        )}
+      </div>
+
+      {/* Stats - wrap on small screens */}
+      <div className="flex flex-wrap items-center gap-4 ml-auto text-xs">
+        <div className="text-right">
+          <p className="font-semibold text-primary">${formatUSD(totalValueUSD)}</p>
+          <p className="text-tertiary">Portfolio</p>
+        </div>
+        <div className="text-right">
+          <p className="font-semibold text-primary">{formatTimeAgo(lastUpdated)}</p>
+          <p className="text-tertiary">Updated</p>
+        </div>
+        <div className="text-right">
+          <p className="font-semibold text-primary">#{Number(updateCount)}</p>
+          <p className="text-tertiary">Updates</p>
+        </div>
+      </div>
     </div>
   )
 }

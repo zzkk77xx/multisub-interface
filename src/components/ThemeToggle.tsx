@@ -19,8 +19,8 @@ export function ThemeToggle() {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
+          width="18"
+          height="18"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -35,8 +35,8 @@ export function ThemeToggle() {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
+          width="18"
+          height="18"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -59,8 +59,8 @@ export function ThemeToggle() {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
+          width="18"
+          height="18"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -76,21 +76,15 @@ export function ThemeToggle() {
     }
   }
 
-  const getLabel = () => {
-    if (theme === 'dark') return 'Dark'
-    if (theme === 'light') return 'Light'
-    return 'System'
-  }
-
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant="ghost"
+      size="icon"
       onClick={toggleTheme}
-      className="flex items-center gap-2"
+      className="w-9 h-9"
+      title={`Theme: ${theme}`}
     >
       {getIcon()}
-      <span className="text-sm">{getLabel()}</span>
     </Button>
   )
 }

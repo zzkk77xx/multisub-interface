@@ -21,7 +21,6 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
 
   const { proposeTransaction, isPending, error } = useSafeProposal()
 
-  // Build list of all addresses to check
   const addressesToCheck = useMemo(() => {
     const allAddresses: `0x${string}`[] = []
     PROTOCOLS.forEach(protocol => {
@@ -38,7 +37,6 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
     addressesToCheck
   )
 
-  // Initialize selected protocols from allowed addresses
   useEffect(() => {
     if (allowedAddresses.size === 0) return
 
@@ -144,9 +142,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
       })
 
       if (result.success) {
-        setSuccessMessage(
-          `Protocol permissions set successfully! Transaction hash: ${result.transactionHash}`
-        )
+        setSuccessMessage(`Protocol permissions set successfully!`)
       } else {
         throw result.error || new Error('Transaction failed')
       }
@@ -159,7 +155,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle>Protocol Permissions</CardTitle>
         <CardDescription>
           Select which DeFi protocol contracts this sub-account can interact with
@@ -167,13 +163,16 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
       </CardHeader>
       <CardContent>
         {isLoadingAllowed ? (
-          <p className="text-sm text-muted-foreground">Loading current permissions...</p>
+          <div className="py-8 text-center">
+            <div className="mx-auto mb-3 border-2 border-accent-primary border-t-transparent rounded-full w-8 h-8 animate-spin" />
+            <p className="text-small text-tertiary">Loading permissions...</p>
+          </div>
         ) : (
           <div className="space-y-4">
             {allowedAddresses.size > 0 && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Currently Allowed</p>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+              <div className="bg-info-muted mb-4 p-3 border border-info/20 rounded-xl">
+                <p className="font-medium text-primary text-small">Currently Allowed</p>
+                <p className="mt-1 text-caption text-secondary">
                   {allowedAddresses.size} address{allowedAddresses.size !== 1 ? 'es' : ''} already
                   permitted
                 </p>
@@ -186,15 +185,19 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
               const isExpanded = expandedProtocol === protocol.id
 
               // Check if any contract in protocol is currently allowed
-              const isProtocolAllowed = protocol.contracts.some(c => allowedAddresses.has(c.address))
+              const isProtocolAllowed = protocol.contracts.some(c =>
+                allowedAddresses.has(c.address)
+              )
 
               return (
                 <div
                   key={protocol.id}
-                  className={`border rounded-lg p-4 ${isProtocolAllowed ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' : ''}`}
+                  className={`rounded-xl border overflow-hidden transition-colors ${
+                    isProtocolAllowed ? 'bg-info-muted border-info/20' : 'bg-elevated border-subtle'
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
+                  <div className="flex justify-between items-center p-4">
+                    <div className="flex flex-1 items-center gap-3">
                       <Checkbox
                         id={`protocol-${protocol.id}`}
                         checked={hasSelectedContracts}
@@ -206,27 +209,19 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
                         onClick={() => setExpandedProtocol(isExpanded ? null : protocol.id)}
                       >
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">{protocol.name}</p>
-                          {isProtocolAllowed && (
-                            <Badge
-                              variant="default"
-                              className="text-xs bg-blue-600"
-                            >
-                              Allowed
-                            </Badge>
-                          )}
+                          <p className="font-medium text-primary text-small">{protocol.name}</p>
+                          {isProtocolAllowed && <Badge variant="info">Allowed</Badge>}
                           {hasSelectedContracts && (
                             <Badge
                               variant="secondary"
                               className="text-xs"
                             >
-                              {selectedContracts.size} contract{selectedContracts.size !== 1 ? 's' : ''}
+                              {selectedContracts.size} contract
+                              {selectedContracts.size !== 1 ? 's' : ''}
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {protocol.description}
-                        </p>
+                        <p className="mt-0.5 text-caption text-tertiary">{protocol.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -250,7 +245,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
                   </div>
 
                   {isExpanded && (
-                    <div className="ml-8 mt-3 space-y-2 border-l-2 border-muted pl-4">
+                    <div className="space-y-2 mt-3 ml-8 pl-4 border-muted border-l-2">
                       {protocol.contracts.map(contract => {
                         const isContractAllowed = allowedAddresses.has(contract.address)
                         return (
@@ -269,7 +264,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
               )
             })}
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-subtle border-t">
               <Button
                 onClick={handleSavePermissions}
                 disabled={isPending || selectedProtocols.size === 0}
@@ -279,10 +274,16 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
               </Button>
 
               {successMessage && (
-                <p className="text-sm text-green-600 mt-2 text-center">✓ {successMessage}</p>
+                <div className="bg-success-muted mt-3 p-3 border border-success/20 rounded-lg text-center">
+                  <p className="text-small text-success">{successMessage}</p>
+                </div>
               )}
 
-              {error && <p className="text-sm text-red-600 mt-2 text-center">✗ {String(error)}</p>}
+              {error && (
+                <div className="bg-error-muted mt-3 p-3 border border-error/20 rounded-lg text-center">
+                  <p className="text-error text-small">{String(error)}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -300,7 +301,11 @@ interface ContractCheckboxProps {
 
 function ContractCheckbox({ contract, checked, onToggle, isAllowed }: ContractCheckboxProps) {
   return (
-    <div className={`flex items-start gap-2 p-2 rounded ${isAllowed ? 'bg-blue-100 dark:bg-blue-950/40' : ''}`}>
+    <div
+      className={`flex items-start gap-2 p-3 rounded-lg transition-colors ${
+        isAllowed ? 'bg-info-muted' : 'bg-elevated-2'
+      }`}
+    >
       <Checkbox
         id={`contract-${contract.id}`}
         checked={checked}
@@ -309,20 +314,13 @@ function ContractCheckbox({ contract, checked, onToggle, isAllowed }: ContractCh
       />
       <label
         htmlFor={`contract-${contract.id}`}
-        className="cursor-pointer flex-1"
+        className="flex-1 cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium">{contract.name}</p>
-          {isAllowed && (
-            <Badge
-              variant="default"
-              className="text-xs bg-blue-600"
-            >
-              Allowed
-            </Badge>
-          )}
+          <p className="font-medium text-sm">{contract.name}</p>
+          {isAllowed && <Badge variant="info">Allowed</Badge>}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{contract.description}</p>
+        <p className="mt-0.5 text-muted-foreground text-xs">{contract.description}</p>
       </label>
     </div>
   )

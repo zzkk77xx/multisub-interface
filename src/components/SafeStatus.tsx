@@ -1,7 +1,6 @@
 import { useAccount } from 'wagmi'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { OracleStatusIndicator } from '@/components/OracleStatusIndicator'
 import { useIsSafeOwner, useSafeAddress } from '@/hooks/useSafe'
 
 export function SafeStatus() {
@@ -10,66 +9,56 @@ export function SafeStatus() {
   const { isSafeOwner, isLoading } = useIsSafeOwner()
 
   if (!isConnected) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Safe Status</CardTitle>
-          <CardDescription>Connect your wallet to view Safe status</CardDescription>
-        </CardHeader>
-      </Card>
-    )
+    return null
   }
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Safe Status</CardTitle>
-          </div>
-          <Badge
-            variant="secondary"
-            className="bg-green-100 text-green-800"
-          >
-            ACTIVE
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">Safe Info</CardTitle>
+          <Badge variant="success" icon={<StatusDot />}>
+            Active
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
-        <OracleStatusIndicator />
-
-        <div className="border-t my-4" />
-        <div className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Safe Address</p>
-            <p className="font-mono text-sm mt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Safe Address */}
+          <div className="bg-elevated-2 p-3 border border-subtle rounded-lg">
+            <p className="mb-1 text-caption text-tertiary uppercase tracking-wider">Safe</p>
+            <p className="font-mono text-primary text-small truncate">
               {safeAddress && typeof safeAddress === 'string'
                 ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}`
                 : 'Loading...'}
             </p>
           </div>
 
-          <div>
-            <p className="text-sm text-muted-foreground">Your Address</p>
-            <p className="font-mono text-sm mt-1">
+          {/* Your Address */}
+          <div className="bg-elevated-2 p-3 border border-subtle rounded-lg">
+            <p className="mb-1 text-caption text-tertiary uppercase tracking-wider">You</p>
+            <p className="font-mono text-primary text-small truncate">
               {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
             </p>
           </div>
 
-          <div>
-            <p className="text-sm text-muted-foreground">Permission Level</p>
-            <div className="mt-1">
-              {isLoading ? (
-                <Badge variant="outline">Checking...</Badge>
-              ) : isSafeOwner ? (
-                <Badge>Safe Signer</Badge>
-              ) : (
-                <Badge variant="outline">Sub-Account / External</Badge>
-              )}
-            </div>
+          {/* Permission Level */}
+          <div className="bg-elevated-2 p-3 border border-subtle rounded-lg">
+            <p className="mb-1 text-caption text-tertiary uppercase tracking-wider">Role</p>
+            {isLoading ? (
+              <Badge variant="outline" className="text-xs">Checking...</Badge>
+            ) : isSafeOwner ? (
+              <Badge variant="info" className="text-xs">Safe Signer</Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">Sub-Account</Badge>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
   )
+}
+
+function StatusDot() {
+  return <span className="bg-success rounded-full w-2 h-2 status-pulse" />
 }

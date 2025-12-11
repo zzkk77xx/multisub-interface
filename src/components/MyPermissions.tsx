@@ -14,13 +14,12 @@ export function MyPermissions() {
   const { address, isConnected } = useAccount()
   const [showProtocols, setShowProtocols] = useState(false)
 
-  // Check which roles the connected address has
   const { data: hasExecuteRole } = useHasRole(address, ROLES.DEFI_EXECUTE_ROLE)
   const { data: hasTransferRole } = useHasRole(address, ROLES.DEFI_TRANSFER_ROLE)
 
   if (!isConnected) {
     return (
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <CardTitle>My Permissions</CardTitle>
           <CardDescription>Connect wallet to view your permissions</CardDescription>
@@ -36,25 +35,22 @@ export function MyPermissions() {
       <Card>
         <CardHeader>
           <CardTitle>My Permissions</CardTitle>
-          <CardDescription>
-            Your current roles and capabilities
-          </CardDescription>
+          <CardDescription>Your current roles and capabilities</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Active Roles */}
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Active Roles</p>
+              <p className="mb-3 text-caption text-tertiary uppercase tracking-wider">
+                Active Roles
+              </p>
               {hasAnyRole ? (
                 <div className="flex flex-wrap gap-2">
                   {hasExecuteRole && (
-                    <Badge className="bg-blue-100 text-blue-800">
-                      {ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}
-                    </Badge>
+                    <Badge variant="info">{ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}</Badge>
                   )}
                   {hasTransferRole && (
-                    <Badge className="bg-purple-100 text-purple-800">
-                      {ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]}
-                    </Badge>
+                    <Badge variant="success">{ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]}</Badge>
                   )}
                 </div>
               ) : (
@@ -63,34 +59,48 @@ export function MyPermissions() {
             </div>
 
             {hasAnyRole && (
-              <div className="space-y-3 mt-4">
-                <p className="text-sm font-medium">Capabilities</p>
+              <div className="space-y-4">
+                <p className="text-caption text-tertiary uppercase tracking-wider">Capabilities</p>
 
                 {hasExecuteRole && (
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm font-medium text-blue-900">
-                      {ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]} Role
-                    </p>
-                    <p className="text-xs text-blue-700 mt-1">
-                      {ROLE_DESCRIPTIONS[ROLES.DEFI_EXECUTE_ROLE]}
-                    </p>
+                  <div className="bg-info-muted p-4 border border-info/20 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <div className="flex flex-shrink-0 justify-center items-center bg-info/20 rounded-lg w-8 h-8">
+                        <span className="text-info">⚡</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-primary text-small">
+                          {ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}
+                        </p>
+                        <p className="mt-1 text-caption text-tertiary">
+                          {ROLE_DESCRIPTIONS[ROLES.DEFI_EXECUTE_ROLE]}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {hasTransferRole && (
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <p className="text-sm font-medium text-purple-900">
-                      {ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]} Role
-                    </p>
-                    <p className="text-xs text-purple-700 mt-1">
-                      {ROLE_DESCRIPTIONS[ROLES.DEFI_TRANSFER_ROLE]}
-                    </p>
+                  <div className="bg-success-muted p-4 border border-success/20 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <div className="flex flex-shrink-0 justify-center items-center bg-success/20 rounded-lg w-8 h-8">
+                        <span className="text-success">💸</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-primary text-small">
+                          {ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]}
+                        </p>
+                        <p className="mt-1 text-caption text-tertiary">
+                          {ROLE_DESCRIPTIONS[ROLES.DEFI_TRANSFER_ROLE]}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 <div className="pt-2">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={() => setShowProtocols(!showProtocols)}
                     className="w-full"
@@ -99,12 +109,13 @@ export function MyPermissions() {
                   </Button>
 
                   {showProtocols && address && (
-                    <div className="mt-3 space-y-2">
-                      {PROTOCOLS.map((protocol) => (
+                    <div className="space-y-3 mt-4">
+                      {PROTOCOLS.map((protocol, index) => (
                         <ProtocolAccess
                           key={protocol.id}
                           protocol={protocol}
                           subAccount={address}
+                          index={index}
                         />
                       ))}
                     </div>
@@ -114,11 +125,19 @@ export function MyPermissions() {
             )}
 
             {!hasAnyRole && (
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  You don&apos;t have any roles yet. A Safe owner needs to grant you permissions before
-                  you can execute DeFi operations.
-                </p>
+              <div className="bg-elevated-2 p-4 border border-subtle rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="flex flex-shrink-0 justify-center items-center bg-warning-muted rounded-lg w-8 h-8">
+                    <span className="text-warning">⚠️</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary text-small">No Permissions</p>
+                    <p className="mt-1 text-caption text-tertiary">
+                      You don't have any roles yet. A Safe owner needs to grant you permissions
+                      before you can execute DeFi operations.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -145,15 +164,14 @@ interface ProtocolAccessProps {
     pools: Array<{ id: string; name: string; address: `0x${string}`; token: string }>
   }
   subAccount: `0x${string}`
+  index: number
 }
 
-function ProtocolAccess({ protocol, subAccount }: ProtocolAccessProps) {
+function ProtocolAccess({ protocol, subAccount, index }: ProtocolAccessProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Check if protocol contract is allowed
   const { data: protocolAllowed } = useIsAddressAllowed(subAccount, protocol.contractAddress)
 
-  // Count allowed pools
   const poolChecks = protocol.pools.map(pool => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { data: isAllowed } = useIsAddressAllowed(subAccount, pool.address)
@@ -166,33 +184,35 @@ function ProtocolAccess({ protocol, subAccount }: ProtocolAccessProps) {
   if (!hasAccess) return null
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div
+      className="border border-subtle rounded-xl overflow-hidden animate-fade-in-up"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
       <div
-        className="flex items-center justify-between p-2 bg-muted/50 cursor-pointer"
+        className="flex justify-between items-center bg-elevated hover:bg-elevated-2 p-3 transition-colors cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs">
-            {protocol.name}
-          </Badge>
+        <div className="flex items-center gap-3">
+          <Badge variant="info">{protocol.name}</Badge>
           {allowedPools > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-caption text-tertiary">
               {allowedPools} pool{allowedPools !== 1 ? 's' : ''}
             </span>
           )}
         </div>
-        <span className="text-xs">{isExpanded ? '▲' : '▼'}</span>
+        <span className="text-tertiary text-sm">{isExpanded ? '▲' : '▼'}</span>
       </div>
 
       {isExpanded && (
-        <div className="p-2 space-y-1 bg-background">
+        <div className="space-y-2 bg-elevated-2 p-3 border-subtle border-t">
           {poolChecks.map(({ pool, isAllowed }) =>
             isAllowed ? (
-              <div key={pool.id} className="flex items-center justify-between text-xs p-1">
-                <span>{pool.name}</span>
-                <Badge variant="outline" className="text-xs">
-                  {pool.token}
-                </Badge>
+              <div
+                key={pool.id}
+                className="flex justify-between items-center bg-elevated p-2 rounded-lg"
+              >
+                <span className="text-primary text-small">{pool.name}</span>
+                <Badge variant="outline">{pool.token}</Badge>
               </div>
             ) : null
           )}
