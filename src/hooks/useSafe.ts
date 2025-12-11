@@ -212,7 +212,9 @@ export function useAllowedAddresses(
 
       return allowed
     },
-    enabled: Boolean(addresses.defiInteractor && publicClient && subAccountAddress && addressesToCheck),
+    enabled: Boolean(
+      addresses.defiInteractor && publicClient && subAccountAddress && addressesToCheck
+    ),
   })
 }
 
