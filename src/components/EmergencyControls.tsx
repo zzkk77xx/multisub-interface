@@ -1,9 +1,100 @@
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useIsSafeOwner } from '@/hooks/useSafe'
+import { useContractAddresses } from '@/contexts/ContractAddressContext'
+import { useSafeProposal, encodeContractCall } from '@/hooks/useSafeProposal'
+import { useReadContract } from 'wagmi'
+import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
 
 export function EmergencyControls() {
   const { isSafeOwner } = useIsSafeOwner()
+  const { addresses } = useContractAddresses()
+  const { proposeTransaction, isPending, error } = useSafeProposal()
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // Read current pause status
+  const { data: isPaused, refetch: refetchPauseStatus } = useReadContract({
+    address: addresses.defiInteractor,
+    abi: DEFI_INTERACTOR_ABI,
+    functionName: 'paused',
+    query: {
+      enabled: Boolean(addresses.defiInteractor),
+    },
+  })
+
+  const handlePause = async () => {
+    if (!addresses.defiInteractor) {
+      alert('Contract address not configured')
+      return
+    }
+
+    try {
+      setSuccessMessage(null)
+
+      const data = encodeContractCall(
+        addresses.defiInteractor,
+        DEFI_INTERACTOR_ABI as unknown as any[],
+        'pause',
+        []
+      )
+
+      const result = await proposeTransaction({
+        to: addresses.defiInteractor,
+        data,
+      })
+
+      if (result.success) {
+        await refetchPauseStatus()
+        setSuccessMessage(
+          `Contract paused successfully! Transaction hash: ${result.transactionHash}`
+        )
+      } else {
+        throw result.error || new Error('Transaction failed')
+      }
+    } catch (error) {
+      console.error('Error proposing pause:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Failed to propose transaction'
+      alert(`Failed to propose pause transaction. ${errorMsg}`)
+    }
+  }
+
+  const handleUnpause = async () => {
+    if (!addresses.defiInteractor) {
+      alert('Contract address not configured')
+      return
+    }
+
+    try {
+      setSuccessMessage(null)
+
+      const data = encodeContractCall(
+        addresses.defiInteractor,
+        DEFI_INTERACTOR_ABI as unknown as any[],
+        'unpause',
+        []
+      )
+
+      const result = await proposeTransaction({
+        to: addresses.defiInteractor,
+        data,
+      })
+
+      if (result.success) {
+        await refetchPauseStatus()
+        setSuccessMessage(
+          `Contract unpaused successfully! Transaction hash: ${result.transactionHash}`
+        )
+      } else {
+        throw result.error || new Error('Transaction failed')
+      }
+    } catch (error) {
+      console.error('Error proposing unpause:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Failed to propose transaction'
+      alert(`Failed to propose unpause transaction. ${errorMsg}`)
+    }
+  }
 
   if (!isSafeOwner) {
     return (
@@ -24,27 +115,104 @@ export function EmergencyControls() {
   return (
     <Card>
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <CardTitle>Emergency Controls</CardTitle>
-          <Badge variant="warning">Owner Only</Badge>
+          {isPaused ? (
+            <Badge variant="error">⚠️ PAUSED</Badge>
+          ) : (
+            <Badge variant="success">✓ Active</Badge>
+          )}
         </div>
+        <CardDescription>Pause or unpause all sub-account operations</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="p-4 rounded-xl bg-warning-muted border border-warning/20">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-warning/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-warning">⚠️</span>
-            </div>
-            <div>
-              <p className="text-small font-medium text-primary">
-                Emergency Actions
-              </p>
-              <p className="text-caption text-tertiary mt-1">
-                Emergency controls for Safe owners to manage critical operations will be available here.
-              </p>
+      <CardContent className="space-y-4">
+        {/* Warning Message */}
+        {isPaused ? (
+          <div className="bg-error-muted p-4 border border-error/20 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex flex-shrink-0 justify-center items-center bg-error/20 rounded-lg w-8 h-8">
+                <span>⚠️</span>
+              </div>
+              <div>
+                <p className="font-medium text-primary text-small">
+                  Contract is Currently Paused
+                </p>
+                <p className="mt-1 text-caption text-tertiary">
+                  All sub-account operations are frozen. No transfers or protocol interactions can be executed.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-info-muted p-4 border border-info/20 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex flex-shrink-0 justify-center items-center bg-info/20 rounded-lg w-8 h-8">
+                <span>✓</span>
+              </div>
+              <div>
+                <p className="font-medium text-primary text-small">
+                  Contract is Active
+                </p>
+                <p className="mt-1 text-caption text-tertiary">
+                  All sub-accounts can execute transfers and protocol interactions normally.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pause Button */}
+        {!isPaused && (
+          <div className="space-y-3">
+            <div className="bg-warning-muted p-4 border border-warning/20 rounded-xl">
+              <p className="font-medium text-primary text-small">
+                Pausing will immediately freeze all sub-account operations:
+              </p>
+              <ul className="mt-2 ml-4 text-caption text-tertiary list-disc space-y-1">
+                <li>Token transfers</li>
+                <li>DeFi protocol interactions</li>
+                <li>All sub-account transactions</li>
+              </ul>
+            </div>
+            <Button
+              onClick={handlePause}
+              disabled={isPending}
+              variant="destructive"
+              className="w-full"
+            >
+              {isPending ? 'Proposing to Safe...' : '⚠️ Pause Contract'}
+            </Button>
+          </div>
+        )}
+
+        {/* Unpause Button */}
+        {isPaused && (
+          <div className="space-y-3">
+            <div className="bg-success-muted p-4 border border-success/20 rounded-xl">
+              <p className="text-small text-tertiary">
+                Unpausing will restore normal operations for all sub-accounts.
+              </p>
+            </div>
+            <Button
+              onClick={handleUnpause}
+              disabled={isPending}
+              variant="default"
+              className="w-full"
+            >
+              {isPending ? 'Proposing to Safe...' : '✓ Unpause Contract'}
+            </Button>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <p className="text-small text-success">✓ {successMessage}</p>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <p className="text-small text-error">✗ {String(error)}</p>
+        )}
       </CardContent>
     </Card>
   )
