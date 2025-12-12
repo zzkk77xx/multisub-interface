@@ -29,53 +29,39 @@ export function ContractAddressProvider({ children }: ContractAddressProviderPro
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const defiInteractorParam = params.get('defiInteractor')
-    const safeParam = params.get('safe')
 
-    // Check localStorage for saved addresses
+    // Check localStorage for saved address
     const savedDefiInteractor = localStorage.getItem('defiInteractor')
-    const savedSafe = localStorage.getItem('safe')
 
-    const newAddresses: ContractAddresses = {
-      defiInteractor: undefined,
-      safe: undefined,
-    }
+    let defiInteractor: `0x${string}` | undefined = undefined
 
-    // Priority: URL params > localStorage > env variables
+    // Priority: URL params > localStorage
     if (defiInteractorParam && isAddress(defiInteractorParam)) {
-      newAddresses.defiInteractor = defiInteractorParam
+      defiInteractor = defiInteractorParam
       localStorage.setItem('defiInteractor', defiInteractorParam)
     } else if (savedDefiInteractor && isAddress(savedDefiInteractor)) {
-      newAddresses.defiInteractor = savedDefiInteractor
-    } 
-    
-    if (safeParam && isAddress(safeParam)) {
-      newAddresses.safe = safeParam
-      localStorage.setItem('safe', safeParam)
-    } else if (savedSafe && isAddress(savedSafe)) {
-      newAddresses.safe = savedSafe
+      defiInteractor = savedDefiInteractor
     }
 
-    setAddresses(newAddresses)
+    // Note: Safe is derived from DeFi Interactor via useSafeAddress() hook
+    setAddresses({ defiInteractor, safe: undefined })
   }, [])
 
   const setDefiInteractor = (address: `0x${string}`) => {
-    setAddresses(prev => ({ ...prev, defiInteractor: address }))
+    setAddresses(prev => ({ ...prev, defiInteractor: address, safe: undefined }))
     localStorage.setItem('defiInteractor', address)
+    localStorage.removeItem('safe') // Clean up legacy storage
 
-    // Update URL params
+    // Update URL params (only defiInteractor, remove safe if present)
     const params = new URLSearchParams(window.location.search)
     params.set('defiInteractor', address)
+    params.delete('safe') // Clean up legacy URL param
     window.history.replaceState({}, '', `${window.location.pathname}?${params}`)
   }
 
   const setSafe = (address: `0x${string}`) => {
+    // Safe is derived from DeFi Interactor - only update local state as cache
     setAddresses(prev => ({ ...prev, safe: address }))
-    localStorage.setItem('safe', address)
-
-    // Update URL params
-    const params = new URLSearchParams(window.location.search)
-    params.set('safe', address)
-    window.history.replaceState({}, '', `${window.location.pathname}?${params}`)
   }
 
   const isConfigured = Boolean(addresses.defiInteractor)
