@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib/contracts'
-import { PROTOCOLS } from '@/lib/protocols'
+import { PROTOCOLS, type Protocol } from '@/lib/protocols'
 import { useHasRole, useIsAddressAllowed } from '@/hooks/useSafe'
 
 export function MyPermissionsCard() {
@@ -110,27 +110,20 @@ export function MyPermissionsCard() {
 }
 
 interface ProtocolAccessCompactProps {
-  protocol: {
-    id: string
-    name: string
-    contractAddress: `0x${string}`
-    pools: Array<{ id: string; name: string; address: `0x${string}`; token: string }>
-  }
+  protocol: Protocol
   subAccount: `0x${string}`
   index: number
 }
 
 function ProtocolAccessCompact({ protocol, subAccount, index }: ProtocolAccessCompactProps) {
-  const { data: protocolAllowed } = useIsAddressAllowed(subAccount, protocol.contractAddress)
-
-  const poolChecks = protocol.pools.map(pool => {
+  const contractChecks = protocol.contracts.map(contract => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: isAllowed } = useIsAddressAllowed(subAccount, pool.address)
-    return { pool, isAllowed }
+    const { data: isAllowed } = useIsAddressAllowed(subAccount, contract.address)
+    return { contract, isAllowed }
   })
 
-  const allowedPools = poolChecks.filter(p => p.isAllowed).length
-  const hasAccess = protocolAllowed || allowedPools > 0
+  const allowedContracts = contractChecks.filter(c => c.isAllowed).length
+  const hasAccess = allowedContracts > 0
 
   if (!hasAccess) return null
 
@@ -142,9 +135,9 @@ function ProtocolAccessCompact({ protocol, subAccount, index }: ProtocolAccessCo
       <Badge variant="info" className="text-xs">
         {protocol.name}
       </Badge>
-      {allowedPools > 0 && (
+      {allowedContracts > 0 && (
         <span className="text-caption text-tertiary">
-          {allowedPools} pool{allowedPools !== 1 ? 's' : ''}
+          {allowedContracts} contract{allowedContracts !== 1 ? 's' : ''}
         </span>
       )}
     </div>
