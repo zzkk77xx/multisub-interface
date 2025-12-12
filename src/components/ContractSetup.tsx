@@ -25,7 +25,7 @@ type OnboardingStep = 'welcome' | 'connect-wallet' | 'enter-contract'
 
 export function ContractSetup() {
   const { addresses, setDefiInteractor, isConfigured } = useContractAddresses()
-  const { recentAddresses, addAddress } = useRecentAddresses()
+  const { recentAddresses, addAddress, removeAddress } = useRecentAddresses()
   const { data: safeAddress } = useSafeAddress()
   const publicClient = usePublicClient()
 
@@ -213,10 +213,27 @@ export function ContractSetup() {
                         )}
                       >
                         <span>{addr.slice(0, 10)}...{addr.slice(-8)}</span>
-                        <CopyButton
-                          value={addr}
-                          className="ml-2"
-                        />
+                        <div className="flex items-center gap-1">
+                          <CopyButton value={addr} />
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={e => {
+                              e.stopPropagation()
+                              removeAddress(addr)
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.stopPropagation()
+                                removeAddress(addr)
+                              }
+                            }}
+                            className="p-1 text-tertiary hover:text-error transition-colors cursor-pointer"
+                            title="Remove from history"
+                          >
+                            ✕
+                          </span>
+                        </div>
                       </button>
                     ))}
                   </div>
