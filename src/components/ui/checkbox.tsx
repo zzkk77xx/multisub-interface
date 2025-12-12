@@ -1,27 +1,29 @@
-import * as React from "react"
+import * as React from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
-export interface CheckboxProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
 }
 
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, ...props }, ref) => {
     return (
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 pt-[6px]">
         <input
           type="checkbox"
           className={cn(
-            "h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2",
+            'border-gray-300 rounded focus:ring-2 focus:ring-ring focus:ring-offset-2 w-4 h-4 text-primary',
             className
           )}
           ref={ref}
           {...props}
         />
         {label && (
-          <label htmlFor={props.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          <label
+            htmlFor={props.id}
+            className="peer-disabled:opacity-70 font-medium text-sm leading-none peer-disabled:cursor-not-allowed"
+          >
             {label}
           </label>
         )}
@@ -29,6 +31,6 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     )
   }
 )
-Checkbox.displayName = "Checkbox"
+Checkbox.displayName = 'Checkbox'
 
 export { Checkbox }
