@@ -5,11 +5,34 @@ import Safe from '@safe-global/protocol-kit';
 import { MetaTransactionData } from '@safe-global/safe-core-sdk-types';
 import { createEip1193Provider } from '@/lib/viemToEip1193';
 import { useSafeAddress } from './useSafe';
+import { useTransactionInvalidation } from './useTransactionInvalidation';
+import { TransactionType } from '@/lib/transactionTypes';
 
 interface TransactionRequest {
   to: Address;
   value?: bigint;
   data: `0x${string}`;
+}
+
+interface ProposeTransactionOptions {
+  transactionType?: TransactionType;
+}
+
+// Helper to detect user rejection errors from wallet
+function isUserRejection(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase()
+    const name = error.name.toLowerCase()
+    return (
+      message.includes('user rejected') ||
+      message.includes('user denied') ||
+      message.includes('user cancelled') ||
+      message.includes('rejected the request') ||
+      name.includes('userrejected') ||
+      name.includes('actionrejected')
+    )
+  }
+  return false
 }
 
 export function encodeContractCall(
@@ -49,9 +72,13 @@ export function useSafeProposal() {
   const { data: safeAddress } = useSafeAddress();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const { invalidateQueriesForTransaction } = useTransactionInvalidation();
 
   const proposeTransaction = useCallback(
-    async (transaction: TransactionRequest | TransactionRequest[]) => {
+    async (
+      transaction: TransactionRequest | TransactionRequest[],
+      options?: ProposeTransactionOptions
+    ) => {
       if (!walletClient || !address) {
         throw new Error('Wallet not connected');
       }
@@ -107,12 +134,35 @@ export function useSafeProposal() {
         const txHash = executeTxResponse.hash;
         console.log('Transaction hash:', txHash);
 
+        // Wait for transaction to be confirmed on the blockchain
+        console.log('Waiting for transaction confirmation...');
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: txHash as `0x${string}`,
+          confirmations: 1,
+        });
+        console.log('Transaction confirmed:', receipt);
+
+        // Check if transaction was successful
+        if (receipt.status === 'reverted') {
+          throw new Error('Transaction reverted on chain');
+        }
+
+        // Invalidate relevant queries AFTER confirmation
+        if (options?.transactionType) {
+          await invalidateQueriesForTransaction(options.transactionType);
+        }
+
         return {
           success: true,
           safeTxHash,
           transactionHash: txHash
         };
       } catch (err) {
+        // Handle user rejection gracefully - not an error, just cancelled
+        if (isUserRejection(err)) {
+          return { success: false, cancelled: true };
+        }
+
         console.error('Safe transaction failed:', err);
         const errorMessage = err instanceof Error ? err.message : 'Transaction failed';
         setError(err instanceof Error ? err : new Error(errorMessage));
@@ -121,7 +171,7 @@ export function useSafeProposal() {
         setIsPending(false);
       }
     },
-    [walletClient, address, safeAddress, publicClient]
+    [walletClient, address, safeAddress, publicClient, invalidateQueriesForTransaction]
   );
 
   return {
