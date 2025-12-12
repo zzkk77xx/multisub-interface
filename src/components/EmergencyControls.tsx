@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { useIsSafeOwner } from '@/hooks/useSafe'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { useSafeProposal, encodeContractCall } from '@/hooks/useSafeProposal'
+import { TRANSACTION_TYPES } from '@/lib/transactionTypes'
 import { useReadContract } from 'wagmi'
 import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
 
@@ -15,7 +16,7 @@ export function EmergencyControls() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Read current pause status
-  const { data: isPaused, refetch: refetchPauseStatus } = useReadContract({
+  const { data: isPaused } = useReadContract({
     address: addresses.defiInteractor,
     abi: DEFI_INTERACTOR_ABI,
     functionName: 'paused',
@@ -40,16 +41,18 @@ export function EmergencyControls() {
         []
       )
 
-      const result = await proposeTransaction({
-        to: addresses.defiInteractor,
-        data,
-      })
+      const result = await proposeTransaction(
+        { to: addresses.defiInteractor, data },
+        { transactionType: TRANSACTION_TYPES.PAUSE }
+      )
 
       if (result.success) {
-        await refetchPauseStatus()
         setSuccessMessage(
           `Contract paused successfully! Transaction hash: ${result.transactionHash}`
         )
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
       } else {
         throw result.error || new Error('Transaction failed')
       }
@@ -76,16 +79,18 @@ export function EmergencyControls() {
         []
       )
 
-      const result = await proposeTransaction({
-        to: addresses.defiInteractor,
-        data,
-      })
+      const result = await proposeTransaction(
+        { to: addresses.defiInteractor, data },
+        { transactionType: TRANSACTION_TYPES.UNPAUSE }
+      )
 
       if (result.success) {
-        await refetchPauseStatus()
         setSuccessMessage(
           `Contract unpaused successfully! Transaction hash: ${result.transactionHash}`
         )
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
       } else {
         throw result.error || new Error('Transaction failed')
       }

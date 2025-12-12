@@ -1,6 +1,7 @@
 import { useAccount } from 'wagmi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CopyButton } from '@/components/ui/copy-button'
 import { useIsSafeOwner, useSafeAddress } from '@/hooks/useSafe'
 
 export function SafeStatus() {
@@ -27,19 +28,25 @@ export function SafeStatus() {
           {/* Safe Address */}
           <div className="bg-elevated-2 p-3 border border-subtle rounded-lg">
             <p className="mb-1 text-caption text-tertiary uppercase tracking-wider">Safe</p>
-            <p className="font-mono text-primary text-small truncate">
-              {safeAddress && typeof safeAddress === 'string'
-                ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}`
-                : 'Loading...'}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className="font-mono text-primary text-small truncate">
+                {safeAddress && typeof safeAddress === 'string'
+                  ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}`
+                  : 'Loading...'}
+              </p>
+              {safeAddress && <CopyButton value={safeAddress} />}
+            </div>
           </div>
 
           {/* Your Address */}
           <div className="bg-elevated-2 p-3 border border-subtle rounded-lg">
             <p className="mb-1 text-caption text-tertiary uppercase tracking-wider">You</p>
-            <p className="font-mono text-primary text-small truncate">
-              {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className="font-mono text-primary text-small truncate">
+                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
+              </p>
+              {address && <CopyButton value={address} />}
+            </div>
           </div>
 
           {/* Permission Level */}

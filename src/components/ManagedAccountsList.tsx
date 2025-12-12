@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CopyButton } from '@/components/ui/copy-button'
 import { useManagedAccounts } from '@/hooks/useSafe'
 import { ROLE_NAMES, ROLES } from '@/lib/contracts'
 
@@ -59,9 +60,12 @@ export function ManagedAccountsList() {
                 className="flex items-center justify-between p-3 border rounded-lg"
               >
                 <div>
-                  <p className="font-mono text-sm font-medium">
-                    {account.address.slice(0, 6)}...{account.address.slice(-4)}
-                  </p>
+                  <div className="flex items-center gap-1">
+                    <p className="font-mono text-sm font-medium">
+                      {account.address.slice(0, 6)}...{account.address.slice(-4)}
+                    </p>
+                    <CopyButton value={account.address} />
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Added: {account.addedAt ? new Date(account.addedAt * 1000).toLocaleString() : 'Unknown'}
                   </p>

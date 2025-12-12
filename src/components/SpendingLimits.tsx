@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,8 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { TooltipIcon } from '@/components/ui/tooltip'
 import { DEFI_INTERACTOR_ABI } from '@/lib/contracts'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
-import { useSubAccountLimits } from '@/hooks/useSafe'
+import { useSubAccountLimits, useSafeValue } from '@/hooks/useSafe'
+import { formatUSD } from '@/lib/utils'
 import { useSafeProposal, encodeContractCall } from '@/hooks/useSafeProposal'
+import { TRANSACTION_TYPES } from '@/lib/transactionTypes'
 
 interface SpendingLimitsProps {
   subAccountAddress: `0x${string}`
@@ -19,11 +22,37 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
   // Read current limits using hook - NEW: returns only 2 values
   const { data: currentLimits } = useSubAccountLimits(subAccountAddress)
 
+  // Get Safe portfolio value from oracle
+  const { data: safeValue } = useSafeValue()
+
+  // Calculate USD amount for the current spending limit
+  const maxAllowanceUSD =
+    safeValue && currentLimits ? (safeValue[0] * BigInt(currentLimits[0])) / 10000n : null
+
   const [spendingLimit, setSpendingLimit] = useState('10') // Default 10% - unified limit
+
+  // Calculate USD amount based on user input (real-time)
+  const inputAllowanceUSD = safeValue
+    ? (safeValue[0] * BigInt(Math.floor(parseFloat(spendingLimit || '0') * 100))) / 10000n
+    : null
   const [windowHours, setWindowHours] = useState('24') // Default 24 hours
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const { proposeTransaction, isPending, error } = useSafeProposal()
+
+  // Increment/decrement handlers for custom spinners
+  const incrementSpendingLimit = () => {
+    setSpendingLimit(prev => Math.min(100, parseFloat(prev || '0') + 0.5).toString())
+  }
+  const decrementSpendingLimit = () => {
+    setSpendingLimit(prev => Math.max(0, parseFloat(prev || '0') - 0.5).toString())
+  }
+  const incrementWindowHours = () => {
+    setWindowHours(prev => Math.min(168, parseFloat(prev || '0') + 1).toString())
+  }
+  const decrementWindowHours = () => {
+    setWindowHours(prev => Math.max(1, parseFloat(prev || '0') - 1).toString())
+  }
 
   const handleSaveLimits = async () => {
     const spendingBps = Math.floor(parseFloat(spendingLimit) * 100)
@@ -55,13 +84,16 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
         [subAccountAddress, BigInt(spendingBps), BigInt(windowSeconds)]
       )
 
-      const result = await proposeTransaction({
-        to: addresses.defiInteractor,
-        data,
-      })
+      const result = await proposeTransaction(
+        { to: addresses.defiInteractor, data },
+        { transactionType: TRANSACTION_TYPES.SET_SUB_ACCOUNT_LIMITS }
+      )
 
       if (result.success) {
         setSuccessMessage(`Spending limits set successfully!`)
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
       } else {
         throw result.error || new Error('Transaction failed')
       }
@@ -91,6 +123,9 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                   <p className="font-bold text-primary text-2xl">
                     {(Number(currentLimits[0]) / 100).toFixed(1)}%
                   </p>
+                  {maxAllowanceUSD !== null && (
+                    <p className="text-muted-foreground text-sm">${formatUSD(maxAllowanceUSD)}</p>
+                  )}
                   <p className="mt-1 text-muted-foreground text-xs">Spending Limit</p>
                 </div>
                 <div className="text-center">
@@ -116,17 +151,40 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                 </Badge>
               </label>
               <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  value={spendingLimit}
-                  onChange={e => setSpendingLimit(e.target.value)}
-                  placeholder="10"
-                  className="flex-1"
-                />
+                <div className="relative flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    value={spendingLimit}
+                    onChange={e => setSpendingLimit(e.target.value)}
+                    placeholder="10"
+                    className="pr-8"
+                  />
+                  <div className="top-1/2 right-4 absolute flex flex-col gap-0.5 -translate-y-1/2">
+                    <button
+                      type="button"
+                      onClick={incrementSpendingLimit}
+                      className="text-tertiary hover:text-primary transition-colors cursor-pointer"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={decrementSpendingLimit}
+                      className="text-tertiary hover:text-primary transition-colors cursor-pointer"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
                 <span className="min-w-[30px] font-medium text-small text-tertiary">%</span>
+                {inputAllowanceUSD !== null && (
+                  <span className="text-muted-foreground text-sm">
+                    ≈ ${formatUSD(inputAllowanceUSD)}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -136,16 +194,34 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
                 <TooltipIcon content="Duration in hours for the spending window. Transfer limits reset after this period." />
               </label>
               <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min="1"
-                  max="168"
-                  step="1"
-                  value={windowHours}
-                  onChange={e => setWindowHours(e.target.value)}
-                  placeholder="24"
-                  className="flex-1"
-                />
+                <div className="relative flex-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="168"
+                    step="1"
+                    value={windowHours}
+                    onChange={e => setWindowHours(e.target.value)}
+                    placeholder="24"
+                    className="pr-8"
+                  />
+                  <div className="top-1/2 right-4 absolute flex flex-col gap-0.5 -translate-y-1/2">
+                    <button
+                      type="button"
+                      onClick={incrementWindowHours}
+                      className="text-tertiary hover:text-primary transition-colors cursor-pointer"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={decrementWindowHours}
+                      className="text-tertiary hover:text-primary transition-colors cursor-pointer"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
                 <span className="min-w-[50px] font-medium text-small text-tertiary">hours</span>
               </div>
             </div>

@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { CopyButton } from '@/components/ui/copy-button'
 import { DEFI_INTERACTOR_ABI, ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib/contracts'
 import { ProtocolPermissions } from '@/components/ProtocolPermissions'
 import { SpendingLimits } from '@/components/SpendingLimits'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { useIsSafeOwner, useHasRole, useManagedAccounts } from '@/hooks/useSafe'
 import { useSafeProposal, encodeContractCall } from '@/hooks/useSafeProposal'
+import { TRANSACTION_TYPES } from '@/lib/transactionTypes'
 import { isAddress } from 'viem'
 
 export function SubAccountManager() {
@@ -21,7 +23,7 @@ export function SubAccountManager() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Fetch managed accounts from contract
-  const { data: managedAccounts = [], isLoading: isLoadingAccounts, refetch } = useManagedAccounts()
+  const { data: managedAccounts = [], isLoading: isLoadingAccounts } = useManagedAccounts()
 
   // Use Safe proposal hook
   const { proposeTransaction, isPending, error } = useSafeProposal()
@@ -58,15 +60,18 @@ export function SubAccountManager() {
       }))
 
       const result = await proposeTransaction(
-        transactions.length === 1 ? transactions[0] : transactions
+        transactions.length === 1 ? transactions[0] : transactions,
+        { transactionType: TRANSACTION_TYPES.GRANT_ROLE }
       )
 
       if (result.success) {
-        refetch()
         setNewSubAccount('')
         setGrantExecute(false)
         setGrantTransfer(false)
         setSuccessMessage(`Transaction executed successfully!`)
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
       } else {
         throw result.error || new Error('Transaction failed')
       }
@@ -88,19 +93,52 @@ export function SubAccountManager() {
         roleId,
       ])
 
-      const result = await proposeTransaction({
-        to: addresses.defiInteractor,
-        data,
-      })
+      const result = await proposeTransaction(
+        { to: addresses.defiInteractor, data },
+        { transactionType: TRANSACTION_TYPES.REVOKE_ROLE }
+      )
 
       if (result.success) {
-        refetch()
         setSuccessMessage(`Role revoked successfully!`)
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
       } else {
         throw result.error || new Error('Transaction failed')
       }
     } catch (error) {
       console.error('Error proposing role revoke:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Failed to propose transaction'
+      alert(`Failed to propose transaction. ${errorMsg}`)
+    }
+  }
+
+  const handleGrantRole = async (account: `0x${string}`, roleId: number) => {
+    if (!addresses.defiInteractor) return
+
+    try {
+      setSuccessMessage(null)
+
+      const data = encodeContractCall(addresses.defiInteractor, DEFI_INTERACTOR_ABI, 'grantRole', [
+        account,
+        roleId,
+      ])
+
+      const result = await proposeTransaction(
+        { to: addresses.defiInteractor, data },
+        { transactionType: TRANSACTION_TYPES.GRANT_ROLE }
+      )
+
+      if (result.success) {
+        setSuccessMessage(`Role granted successfully!`)
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
+      } else {
+        throw result.error || new Error('Transaction failed')
+      }
+    } catch (error) {
+      console.error('Error proposing role grant:', error)
       const errorMsg = error instanceof Error ? error.message : 'Failed to propose transaction'
       alert(`Failed to propose transaction. ${errorMsg}`)
     }
@@ -123,7 +161,7 @@ export function SubAccountManager() {
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+    <div className="gap-6 grid grid-cols-1 xl:grid-cols-5">
       {/* Add Sub-Account Form - 2 cols */}
       <div className="xl:col-span-2">
         <Card className="h-full">
@@ -155,7 +193,10 @@ export function SubAccountManager() {
                       onChange={e => setGrantExecute((e.target as HTMLInputElement).checked)}
                     />
                     <div className="flex-1">
-                      <label htmlFor="execute-role" className="font-medium text-primary text-small cursor-pointer">
+                      <label
+                        htmlFor="execute-role"
+                        className="font-medium text-primary text-small cursor-pointer"
+                      >
                         {ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}
                       </label>
                       <p className="mt-0.5 text-caption text-tertiary">
@@ -170,7 +211,10 @@ export function SubAccountManager() {
                       onChange={e => setGrantTransfer((e.target as HTMLInputElement).checked)}
                     />
                     <div className="flex-1">
-                      <label htmlFor="transfer-role" className="font-medium text-primary text-small cursor-pointer">
+                      <label
+                        htmlFor="transfer-role"
+                        className="font-medium text-primary text-small cursor-pointer"
+                      >
                         {ROLE_NAMES[ROLES.DEFI_TRANSFER_ROLE]}
                       </label>
                       <p className="mt-0.5 text-caption text-tertiary">
@@ -209,7 +253,7 @@ export function SubAccountManager() {
       <div className="xl:col-span-3">
         <Card className="h-full">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div>
                 <CardTitle>Managed Sub-Accounts</CardTitle>
                 <CardDescription>View and manage permissions</CardDescription>
@@ -239,6 +283,7 @@ export function SubAccountManager() {
                     key={account.address}
                     account={account.address}
                     onRevokeRole={handleRevokeRole}
+                    onGrantRole={handleGrantRole}
                     isRevoking={isPending}
                     index={index}
                   />
@@ -255,12 +300,14 @@ export function SubAccountManager() {
 interface SubAccountRowProps {
   account: `0x${string}`
   onRevokeRole: (account: `0x${string}`, roleId: number) => Promise<void>
+  onGrantRole: (account: `0x${string}`, roleId: number) => Promise<void>
   isRevoking: boolean
   index: number
 }
 
-function SubAccountRow({ account, onRevokeRole, isRevoking, index }: SubAccountRowProps) {
+function SubAccountRow({ account, onRevokeRole, onGrantRole, isRevoking, index }: SubAccountRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState<'spending' | 'protocols'>('spending')
 
   const { data: hasExecuteRole } = useHasRole(account, ROLES.DEFI_EXECUTE_ROLE)
   const { data: hasTransferRole } = useHasRole(account, ROLES.DEFI_TRANSFER_ROLE)
@@ -272,9 +319,12 @@ function SubAccountRow({ account, onRevokeRole, isRevoking, index }: SubAccountR
     >
       <div className="flex justify-between items-center bg-elevated hover:bg-elevated-2 p-4 transition-colors">
         <div className="flex-1 min-w-0">
-          <p className="font-mono font-medium text-primary text-small truncate">
-            {account.slice(0, 6)}...{account.slice(-4)}
-          </p>
+          <div className="flex items-center gap-1">
+            <p className="font-mono font-medium text-primary text-small truncate">
+              {account.slice(0, 6)}...{account.slice(-4)}
+            </p>
+            <CopyButton value={account} />
+          </div>
           <div className="flex flex-wrap gap-2 mt-2">
             {hasExecuteRole && <Badge variant="info">{ROLE_NAMES[ROLES.DEFI_EXECUTE_ROLE]}</Badge>}
             {hasTransferRole && (
@@ -291,7 +341,7 @@ function SubAccountRow({ account, onRevokeRole, isRevoking, index }: SubAccountR
           >
             {isExpanded ? 'Hide' : 'Configure'}
           </Button>
-          {hasExecuteRole && (
+          {hasExecuteRole ? (
             <Button
               size="sm"
               variant="outline"
@@ -300,8 +350,17 @@ function SubAccountRow({ account, onRevokeRole, isRevoking, index }: SubAccountR
             >
               Revoke Execute
             </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => onGrantRole(account, ROLES.DEFI_EXECUTE_ROLE)}
+              disabled={isRevoking}
+            >
+              Grant Execute
+            </Button>
           )}
-          {hasTransferRole && (
+          {hasTransferRole ? (
             <Button
               size="sm"
               variant="outline"
@@ -310,16 +369,48 @@ function SubAccountRow({ account, onRevokeRole, isRevoking, index }: SubAccountR
             >
               Revoke Transfer
             </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => onGrantRole(account, ROLES.DEFI_TRANSFER_ROLE)}
+              disabled={isRevoking}
+            >
+              Grant Transfer
+            </Button>
           )}
         </div>
       </div>
 
       {isExpanded && (
         <div className="bg-elevated-2 p-4 border-subtle border-t">
-          <div className="gap-4 grid grid-cols-1 lg:grid-cols-2">
-            <SpendingLimits subAccountAddress={account} />
-            <ProtocolPermissions subAccountAddress={account} />
+          {/* Tab Navigation */}
+          <div className="flex gap-1 mb-4 p-1 bg-elevated rounded-lg">
+            <button
+              onClick={() => setActiveTab('spending')}
+              className={`flex-1 px-3 py-2 text-small font-medium rounded-md transition-all ${
+                activeTab === 'spending'
+                  ? 'bg-elevated-2 text-primary shadow-sm'
+                  : 'text-tertiary hover:text-secondary'
+              }`}
+            >
+              Spending Limits
+            </button>
+            <button
+              onClick={() => setActiveTab('protocols')}
+              className={`flex-1 px-3 py-2 text-small font-medium rounded-md transition-all ${
+                activeTab === 'protocols'
+                  ? 'bg-elevated-2 text-primary shadow-sm'
+                  : 'text-tertiary hover:text-secondary'
+              }`}
+            >
+              Protocol Permissions
+            </button>
           </div>
+
+          {/* Tab Content */}
+          {activeTab === 'spending' && <SpendingLimits subAccountAddress={account} />}
+          {activeTab === 'protocols' && <ProtocolPermissions subAccountAddress={account} />}
         </div>
       )}
     </div>

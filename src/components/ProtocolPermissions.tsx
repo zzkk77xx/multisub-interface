@@ -8,6 +8,7 @@ import { PROTOCOLS, Protocol, ProtocolContract } from '@/lib/protocols'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { useSafeProposal, encodeContractCall } from '@/hooks/useSafeProposal'
 import { useAllowedAddresses } from '@/hooks/useSafe'
+import { TRANSACTION_TYPES } from '@/lib/transactionTypes'
 
 interface ProtocolPermissionsProps {
   subAccountAddress: `0x${string}`
@@ -136,13 +137,16 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
         [subAccountAddress, allowedAddresses, true]
       )
 
-      const result = await proposeTransaction({
-        to: addresses.defiInteractor,
-        data,
-      })
+      const result = await proposeTransaction(
+        { to: addresses.defiInteractor, data },
+        { transactionType: TRANSACTION_TYPES.SET_ALLOWED_ADDRESSES }
+      )
 
       if (result.success) {
         setSuccessMessage(`Protocol permissions set successfully!`)
+      } else if ('cancelled' in result && result.cancelled) {
+        // User cancelled - do nothing
+        return
       } else {
         throw result.error || new Error('Transaction failed')
       }
