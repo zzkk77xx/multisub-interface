@@ -1,12 +1,14 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { SafeStatus } from '@/components/SafeStatus'
 import { SubAccountManager } from '@/components/SubAccountManager'
 import { EmergencyControls } from '@/components/EmergencyControls'
-import { MyPermissions } from '@/components/MyPermissions'
+import { MyPermissionsCard } from '@/components/MyPermissionsCard'
 import { ContractSetup } from '@/components/ContractSetup'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { WelcomeHero } from '@/components/WelcomeHero'
 import { StatsBar } from '@/components/StatsBar'
+import { SubAccountDashboard } from '@/components/SubAccountDashboard'
+import { SpendingAllowanceCard } from '@/components/SpendingAllowanceCard'
+import { AcquiredBalancesCard } from '@/components/AcquiredBalancesCard'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
 import { useIsSafeOwner } from '@/hooks/useSafe'
 import { useAccount } from 'wagmi'
@@ -14,7 +16,7 @@ import { useAccount } from 'wagmi'
 function App() {
   const { isConfigured } = useContractAddresses()
   const { isSafeOwner } = useIsSafeOwner()
-  const { isConnected } = useAccount()
+  const { isConnected, address } = useAccount()
 
   return (
     <div className="min-h-screen app-background">
@@ -78,36 +80,39 @@ function App() {
             <ContractSetup />
           </div>
         ) : isSafeOwner ? (
-          /* Safe Owner View */
+          /* Safe Owner View - Content First Layout */
           <div className="animate-fade-in space-y-6">
-            {/* Stats + Oracle en haut */}
+            {/* Stats Bar */}
             <StatsBar />
 
-            {/* Main Content - Full width */}
+            {/* PRIMARY: SubAccountManager en premier */}
             <SubAccountManager />
 
-            {/* Secondary Row - 2 colonnes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SafeStatus />
-              <div className="space-y-4">
+            {/* SECONDARY: Emergency + Config en bas */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
                 <EmergencyControls />
-                <ContractSetup />
               </div>
+              <ContractSetup />
             </div>
           </div>
         ) : (
-          /* Sub-Account / External View */
+          /* Sub-Account View - Cards Masonry Layout */
           <div className="animate-fade-in space-y-6">
-            {/* Stats + Oracle en haut */}
+            {/* Stats Bar */}
             <StatsBar />
 
-            {/* Main Content - Full width */}
-            <MyPermissions />
-
-            {/* Secondary Row - 2 colonnes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SafeStatus />
+            {/* ROW 1: 3 colonnes - Permissions | Spending | Config */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <MyPermissionsCard />
+              <SpendingAllowanceCard address={address} />
               <ContractSetup />
+            </div>
+
+            {/* ROW 2: 2 colonnes - Dashboard | Balances */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SubAccountDashboard />
+              <AcquiredBalancesCard address={address} />
             </div>
           </div>
         )}

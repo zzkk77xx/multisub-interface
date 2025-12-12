@@ -115,6 +115,16 @@
   .no-transition, .no-transition * {
     transition: none !important;
   }
+
+  /* Hide native number input spinners */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 @layer components {
@@ -290,6 +300,21 @@
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out forwards;
   }
 
   /* Scrollbar styling */
