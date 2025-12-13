@@ -48,9 +48,23 @@ export function SubAccountManager() {
     try {
       setSuccessMessage(null)
 
+      // Check if the subaccount already exists and filter roles already granted
+      const existingAccount = managedAccounts.find(
+        acc => acc.address.toLowerCase() === newSubAccount.toLowerCase()
+      )
+
       const rolesToGrant: number[] = []
-      if (grantExecute) rolesToGrant.push(ROLES.DEFI_EXECUTE_ROLE)
-      if (grantTransfer) rolesToGrant.push(ROLES.DEFI_TRANSFER_ROLE)
+      if (grantExecute && !existingAccount?.hasExecuteRole) {
+        rolesToGrant.push(ROLES.DEFI_EXECUTE_ROLE)
+      }
+      if (grantTransfer && !existingAccount?.hasTransferRole) {
+        rolesToGrant.push(ROLES.DEFI_TRANSFER_ROLE)
+      }
+
+      if (rolesToGrant.length === 0) {
+        alert('This subaccount already has all the selected roles')
+        return
+      }
 
       const transactions = rolesToGrant.map(roleId => ({
         to: addresses.defiInteractor,
