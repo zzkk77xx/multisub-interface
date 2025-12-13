@@ -9,7 +9,8 @@ import { DEFI_INTERACTOR_ABI, ROLES, ROLE_NAMES, ROLE_DESCRIPTIONS } from '@/lib
 import { ProtocolPermissions } from '@/components/ProtocolPermissions'
 import { SpendingLimits } from '@/components/SpendingLimits'
 import { useContractAddresses } from '@/contexts/ContractAddressContext'
-import { useIsSafeOwner, useHasRole, useManagedAccounts } from '@/hooks/useSafe'
+import { useIsSafeOwner, useHasRole, useManagedAccounts, useSpendingAllowance, useSafeValue, useSubAccountLimits } from '@/hooks/useSafe'
+import { formatUSD } from '@/lib/utils'
 import { useSafeProposal, encodeContractCall } from '@/hooks/useSafeProposal'
 import { TRANSACTION_TYPES } from '@/lib/transactionTypes'
 import { isAddress } from 'viem'
@@ -312,6 +313,19 @@ function SubAccountRow({ account, onRevokeRole, onGrantRole, isRevoking, index }
   const { data: hasExecuteRole } = useHasRole(account, ROLES.DEFI_EXECUTE_ROLE)
   const { data: hasTransferRole } = useHasRole(account, ROLES.DEFI_TRANSFER_ROLE)
 
+  // Spending allowance data for progress bar
+  const { data: spendingAllowance } = useSpendingAllowance(account)
+  const { data: safeValue } = useSafeValue()
+  const { data: limits } = useSubAccountLimits(account)
+
+  // Calculate spending progress
+  const maxAllowance = safeValue && limits
+    ? (safeValue[0] * BigInt(limits[0])) / 10000n
+    : null
+  const percentUsed = maxAllowance && spendingAllowance !== undefined && maxAllowance > 0n
+    ? Number((maxAllowance - spendingAllowance) * 10000n / maxAllowance) / 100
+    : 0
+
   return (
     <div
       className="border border-subtle rounded-xl overflow-hidden animate-fade-in-up"
@@ -332,6 +346,21 @@ function SubAccountRow({ account, onRevokeRole, onGrantRole, isRevoking, index }
             )}
             {!hasExecuteRole && !hasTransferRole && <Badge variant="outline">No Roles</Badge>}
           </div>
+          {/* Spending Progress Bar */}
+          {maxAllowance !== null && maxAllowance > 0n && (
+            <div className="w-full mt-3">
+              <div className="flex justify-between text-xs text-tertiary mb-1">
+                <span>Used: {percentUsed.toFixed(1)}%</span>
+                <span>${formatUSD(spendingAllowance ?? 0n)} remaining</span>
+              </div>
+              <div className="h-2 bg-elevated-3 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-info to-accent-primary rounded-full transition-all"
+                  style={{ width: `${Math.min(percentUsed, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 ml-4">
           <Button
