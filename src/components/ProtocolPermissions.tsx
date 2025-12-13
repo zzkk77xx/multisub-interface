@@ -61,6 +61,36 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
     setSelectedProtocols(newMap)
   }, [allowedAddresses])
 
+  const hasChanges = useMemo(() => {
+    // Collecter les adresses sélectionnées
+    const selectedAddresses = new Set<`0x${string}`>()
+
+    selectedProtocols.forEach((contractIds, protocolId) => {
+      const protocol = PROTOCOLS.find(p => p.id === protocolId)
+      if (protocol) {
+        contractIds.forEach(contractId => {
+          const contract = protocol.contracts.find(c => c.id === contractId)
+          if (contract) {
+            selectedAddresses.add(contract.address)
+          }
+        })
+      }
+    })
+
+    // Comparer avec les adresses actuellement autorisées
+    if (selectedAddresses.size !== allowedAddresses.size) {
+      return true
+    }
+
+    for (const addr of selectedAddresses) {
+      if (!allowedAddresses.has(addr)) {
+        return true
+      }
+    }
+
+    return false
+  }, [selectedProtocols, allowedAddresses])
+
   const toggleProtocol = (protocolId: string) => {
     const current = selectedProtocols.get(protocolId)
     if (current && current.size > 0) {
@@ -271,7 +301,7 @@ export function ProtocolPermissions({ subAccountAddress }: ProtocolPermissionsPr
             <div className="pt-4 border-subtle border-t">
               <Button
                 onClick={handleSavePermissions}
-                disabled={isPending || selectedProtocols.size === 0}
+                disabled={isPending || selectedProtocols.size === 0 || !hasChanges}
                 className="w-full"
               >
                 {isPending ? 'Proposing to Safe...' : 'Propose Protocol Permissions'}

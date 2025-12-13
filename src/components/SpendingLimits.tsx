@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,27 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
   const [windowHours, setWindowHours] = useState('24') // Default 24 hours
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // Sync form values with contract data when available
+  useEffect(() => {
+    if (currentLimits) {
+      setSpendingLimit((Number(currentLimits[0]) / 100).toString())
+      setWindowHours((Number(currentLimits[1]) / 3600).toString())
+    }
+  }, [currentLimits])
+
   const { proposeTransaction, isPending, error } = useSafeProposal()
+
+  const hasChanges = useMemo(() => {
+    if (!currentLimits) return true // Pas de limites actuelles = on peut proposer
+
+    const inputSpendingBps = Math.floor(parseFloat(spendingLimit || '0') * 100)
+    const inputWindowSeconds = Math.floor(parseFloat(windowHours || '0') * 3600)
+
+    return (
+      inputSpendingBps !== Number(currentLimits[0]) ||
+      inputWindowSeconds !== Number(currentLimits[1])
+    )
+  }, [currentLimits, spendingLimit, windowHours])
 
   // Increment/decrement handlers for custom spinners
   const incrementSpendingLimit = () => {
@@ -251,7 +271,7 @@ export function SpendingLimits({ subAccountAddress }: SpendingLimitsProps) {
 
             <Button
               onClick={handleSaveLimits}
-              disabled={isPending}
+              disabled={isPending || !hasChanges}
               className="w-full"
             >
               {isPending ? 'Proposing to Safe...' : 'Propose Spending Limits'}
